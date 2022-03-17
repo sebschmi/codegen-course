@@ -33,6 +33,7 @@ pub enum Token {
     MulOperator,
     DivOperator,
     ModOperator,
+    NotOperator, // Special case: alphabetic characters
 
     // Keywords
     Program,
@@ -285,6 +286,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             "return" => Token::Return,
             "or" => Token::OrOperator,
             "and" => Token::AndOperator,
+            "not" => Token::NotOperator,
 
             // Identifiers
             // we transform everything to lower case, since identifiers are case-insensitive
