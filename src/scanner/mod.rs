@@ -395,7 +395,7 @@ mod tests {
 
     #[test]
     fn test_large_program() {
-        let program = "program na_5_rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"";
+        let program = "program na_5_rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"(abc)0.1e-3+  \n\t";
         let scanner = Scanner::new(program.chars());
         let tokens: Vec<_> = scanner.map(|token| token.unwrap()).collect();
         use Token::*;
@@ -453,7 +453,12 @@ mod tests {
                 IntegerLiteral("643".to_string()),
                 MinusOperator,
                 RealLiteral("5.4e+3".to_string()),
-                StringLiteral(" \\\" \\\\ £$€@".to_string())
+                StringLiteral(" \\\" \\\\ £$€@".to_string()),
+                OpenParenthesis,
+                Identifier("abc".to_string()),
+                CloseParenthesis,
+                RealLiteral("0.1e-3".to_string()),
+                PlusOperator,
             ]
         );
     }
