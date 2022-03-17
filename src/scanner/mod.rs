@@ -1,11 +1,4 @@
-use crate::error::{ScannerError, Result};
-
-/// The integer type used for literals.
-/// Note that since we output C code, this might be truncated further when compiling the C program.
-pub type IntType = usize;
-/// The real type used for literals.
-/// Note that since we output C code, this might be truncated further when compiling the C program.
-pub type RealType = f64;
+use crate::error::{Result, ScannerError};
 
 /// The set of tokens output by the scanner.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -210,9 +203,10 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
                     if lookahead.is_digit(10) {
                         found_digit = true;
                         literal.push(lookahead);
+                        self.advance();
+                    } else {
+                        break;
                     }
-
-                    self.advance();
                 }
 
                 if !found_digit {
@@ -391,5 +385,76 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
             // If there are no characters left, we are done.
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::scanner::Scanner;
+    use crate::scanner::Token;
+
+    #[test]
+    fn test_large_program() {
+        let program = "program na_5_rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"";
+        let scanner = Scanner::new(program.chars());
+        let tokens: Vec<_> = scanner.map(|token| token.unwrap()).collect();
+        use Token::*;
+        assert_eq!(
+            tokens,
+            vec![
+                Program,
+                Identifier("na_5_rr4_".to_string()),
+                Semicolon,
+                Identifier("functionand".to_string()),
+                AndOperator,
+                Function,
+                PredefinedIdentifier("boolean".to_string()),
+                Identifier("boolean".to_string()),
+                PredefinedIdentifier("true".to_string()),
+                Identifier("false".to_string()),
+                PredefinedIdentifier("false".to_string()),
+                AndOperator,
+                Procedure,
+                OpenParenthesis,
+                CloseParenthesis,
+                CloseParenthesis,
+                OpenParenthesis,
+                CloseParenthesis,
+                OpenParenthesis,
+                ModOperator,
+                IntegerLiteral("54".to_string()),
+                DivOperator,
+                Pipe,
+                CloseBrace,
+                CloseBracket,
+                OpenBrace,
+                OpenBracket,
+                CloseBrace,
+                Identifier("ab".to_string()),
+                Dot,
+                PredefinedIdentifier("size".to_string()),
+                PlusOperator,
+                PredefinedIdentifier("size".to_string()),
+                PlusOperator,
+                Dot,
+                MinusOperator,
+                MulOperator,
+                DivOperator,
+                MinusOperator,
+                IntegerLiteral("4".to_string()),
+                PlusOperator,
+                IntegerLiteral("4".to_string()),
+                OpenParenthesis,
+                PlusOperator,
+                IntegerLiteral("4".to_string()),
+                CloseParenthesis,
+                RealLiteral("5.5".to_string()),
+                Comma,
+                IntegerLiteral("643".to_string()),
+                MinusOperator,
+                RealLiteral("5.4e+3".to_string()),
+                StringLiteral(" \\\" \\\\ £$€@".to_string())
+            ]
+        );
     }
 }
