@@ -59,7 +59,7 @@ pub enum Token {
     // we simply forward literals to the C program and do not bother about parsing them here
     // (except for boolean literals, those do not exist in C by default)
     IntegerLiteral(String), // one or more digits
-    RealLiteral(String), // two groups of one or more digits, separated by a dot
+    RealLiteral(String),    // two groups of one or more digits, separated by a dot
     StringLiteral(String), // enclosed by '"', where certain characters can be escaped with '\', including '"'
 
     // Identifiers
@@ -294,7 +294,8 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             // Identifiers
             // we transform everything to lower case, since identifiers are case-insensitive
             // Boolean has an uppercase B as specified
-            "true" | "false" | "Boolean" | "integer" | "real" | "string" | "read" | "writeln" | "size" => Token::PredefinedIdentifier(literal.to_ascii_lowercase()),
+            "true" | "false" | "Boolean" | "integer" | "real" | "string" | "read" | "writeln"
+            | "size" => Token::PredefinedIdentifier(literal.to_ascii_lowercase()),
             _ => Token::Identifier(literal.to_ascii_lowercase()),
         })
     }
@@ -345,11 +346,13 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                         Token::LtOperator
                     }
                 }
-                '>' => if self.lookahead == Some('=') {
-                    self.advance();
-                    Token::GeqOperator
-                } else {
-                    Token::GtOperator
+                '>' => {
+                    if self.lookahead == Some('=') {
+                        self.advance();
+                        Token::GeqOperator
+                    } else {
+                        Token::GtOperator
+                    }
                 }
                 '+' => Token::PlusOperator,
                 '-' => Token::MinusOperator,
@@ -357,27 +360,27 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                 '/' => Token::DivOperator,
                 '%' => Token::ModOperator,
 
-                other => if other.is_digit(10) {
-                    // integer or real literal
-                    match self.parse_integer_or_real_literal() {
-                        Ok(token) => token,
-                        error => return Some(error),
+                other => {
+                    if other.is_digit(10) {
+                        // integer or real literal
+                        match self.parse_integer_or_real_literal() {
+                            Ok(token) => token,
+                            error => return Some(error),
+                        }
+                    } else if other == '"' {
+                        match self.parse_string_literal() {
+                            Ok(token) => token,
+                            error => return Some(error),
+                        }
+                    } else if other.is_alphabetic() {
+                        match self.parse_keyword_or_identifier_or_predefined_identifier_token() {
+                            Ok(token) => token,
+                            error => return Some(error),
+                        }
+                    } else {
+                        return Some(Err(Error::NotTheStartOfAToken));
                     }
-                } else if other == '"' {
-                    match self.parse_string_literal() {
-                        Ok(token) => token,
-                        error => return Some(error),
-                    }
-                } else if other.is_alphabetic() {
-                    match self.parse_keyword_or_identifier_or_predefined_identifier_token() {
-                        Ok(token) => token,
-                        error => return Some(error),
-                    }
-                } else {
-                    return Some(Err(Error::NotTheStartOfAToken));
-                },
-
-
+                }
             }));
 
             // advance if a token was successfully detected
