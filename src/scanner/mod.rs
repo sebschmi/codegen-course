@@ -1,4 +1,4 @@
-use crate::error::{Error, Result};
+use crate::error::{ScannerError, Result};
 
 /// The integer type used for literals.
 /// Note that since we output C code, this might be truncated further when compiling the C program.
@@ -8,6 +8,7 @@ pub type IntType = usize;
 pub type RealType = f64;
 
 /// The set of tokens output by the scanner.
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Token {
     // Punctuation
     Semicolon,
@@ -140,7 +141,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
 
                     if self.lookahead.is_none() {
                         // we have reached the end of the file without being able to close the comment
-                        return Err(Error::UnclosedComment);
+                        return Err(ScannerError::UnclosedComment.into());
                     } else if (Some('*'), Some('}')) == (self.current, self.lookahead) {
                         // advance twice to move completely out of comment
                         self.advance();
@@ -187,7 +188,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             // unwrap cannot fail, as we push at least one character right after construction
             if literal.ends_with('.') {
                 // the number part of the literal must start and end with a digit
-                return Err(Error::MalformedRealLiteral);
+                return Err(ScannerError::MalformedRealLiteral.into());
             }
 
             // check if there is an exponent
@@ -215,7 +216,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
                 }
 
                 if !found_digit {
-                    return Err(Error::MalformedRealLiteral);
+                    return Err(ScannerError::MalformedRealLiteral.into());
                 }
             }
 
@@ -250,7 +251,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             self.advance();
         }
 
-        Err(Error::UnclosedStringLiteral)
+        Err(ScannerError::UnclosedStringLiteral.into())
     }
     /// This function parses the alphanumeric token starting with the current alphabetic character,
     /// and advances the iterator until current is the last character of the token.
@@ -378,7 +379,7 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                             error => return Some(error),
                         }
                     } else {
-                        return Some(Err(Error::NotTheStartOfAToken));
+                        return Some(Err(ScannerError::NotTheStartOfAToken.into()));
                     }
                 }
             }));

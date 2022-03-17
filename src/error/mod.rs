@@ -1,8 +1,9 @@
 /// A shorthand to a `Result` type with the error type of the compiler.
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// The set of all errors that can occur in the compiler.
-pub enum Error {
+/// The set of all errors that can occur in the scanner.
+#[derive(Debug)]
+pub enum ScannerError {
     /// The end of input was reached while being inside a comment environment.
     UnclosedComment,
 
@@ -14,4 +15,16 @@ pub enum Error {
 
     /// A string literal was never closed.
     UnclosedStringLiteral,
+}
+
+/// The set of all errors that can occur in the compiler.
+#[derive(Debug)]
+pub enum Error {
+    ScannerError(ScannerError),
+}
+
+impl From<ScannerError> for Error {
+    fn from(error: ScannerError) -> Self {
+        Self::ScannerError(error)
+    }
 }
