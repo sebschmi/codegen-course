@@ -1,4 +1,4 @@
-use crate::error::{Result, ScannerError};
+use crate::error::{Result, scanner_error, ScannerErrorKind};
 
 /// The set of tokens output by the scanner.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -85,7 +85,8 @@ pub struct Scanner<CharacterIterator> {
 
 impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
     /// Create and initialise a new scanner over the given input.
-    pub fn new(input: CharacterIterator) -> Self {
+    /// The scanner moves to the first token right away.
+    pub fn new(input: CharacterIterator) -> Result<Self> {
         let mut result = Self {
             input,
             current: None,
@@ -95,7 +96,8 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
         };
         result.advance();
         result.advance();
-        result
+        result.skip_comments_and_whitespace()?;
+        Ok(result)
     }
 
     /// Advances the position in the input by a single character.
@@ -135,7 +137,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
 
                     if self.lookahead.is_none() {
                         // we have reached the end of the file without being able to close the comment
-                        return Err(ScannerError::UnclosedComment.into());
+                        return Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::UnclosedComment));
                     } else if (Some('*'), Some('}')) == (self.current, self.lookahead) {
                         // advance twice to move completely out of comment
                         self.advance();
@@ -182,7 +184,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             // unwrap cannot fail, as we push at least one character right after construction
             if literal.ends_with('.') {
                 // the number part of the literal must start and end with a digit
-                return Err(ScannerError::MalformedRealLiteral.into());
+                return Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::MalformedRealLiteral));
             }
 
             // check if there is an exponent
@@ -211,7 +213,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
                 }
 
                 if !found_digit {
-                    return Err(ScannerError::MalformedRealLiteral.into());
+                    return Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::MalformedRealLiteral));
                 }
             }
 
@@ -246,7 +248,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             self.advance();
         }
 
-        Err(ScannerError::UnclosedStringLiteral.into())
+        Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::UnclosedStringLiteral))
     }
     /// This function parses the alphanumeric token starting with the current alphabetic character,
     /// and advances the iterator until current is the last character of the token.
@@ -295,6 +297,27 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             | "size" => Token::PredefinedIdentifier(literal.to_ascii_lowercase()),
             _ => Token::Identifier(literal.to_ascii_lowercase()),
         })
+    }
+
+    pub fn next_with_interval(&mut self) -> Option<(Result<Token>, ScanInterval)> {
+        let start_line = self.line;
+        let start_column = self.column;
+        let token = self.next();
+        let end_line = self.line;
+        let end_column = self.column;
+        let interval = ScanInterval {
+            start_line, start_column, end_line, end_column,
+        };
+
+        match token {
+            Some(token) => Some((token, interval)),
+            None => None,
+        }
+    }
+
+    /// Returns the current character as [ScanInterval].
+    pub fn current_interval(&self) -> ScanInterval {
+        ScanInterval::single(self.line, self.column)
     }
 }
 
@@ -375,7 +398,7 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                             error => return Some(error),
                         }
                     } else {
-                        return Some(Err(ScannerError::NotTheStartOfAToken.into()));
+                        return Some(Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::NotTheStartOfAToken)));
                     }
                 }
             }));
@@ -386,6 +409,32 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
         } else {
             // If there are no characters left, we are done.
             None
+        }
+    }
+}
+
+
+/// The interval a scanned token takes up in the source file.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ScanInterval {
+    /// The line this node starts in.
+    start_line: usize,
+    /// The line this node ends in.
+    end_line: usize,
+    /// The column this node starts in.
+    start_column: usize,
+    /// The column this node ends in.
+    end_column: usize,
+}
+
+impl ScanInterval {
+    /// A single character scan interval.
+    pub fn single(line: usize, column: usize) -> Self {
+        Self {
+            start_line: line,
+            end_line: line,
+            start_column: column,
+            end_column: column + 1,
         }
     }
 }
@@ -465,3 +514,4 @@ mod tests {
         );
     }
 }
+
