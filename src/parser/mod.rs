@@ -1,8 +1,9 @@
+use crate::error::Result;
 use crate::error::{parser_error, ParserErrorKind};
-use crate::error::{Result};
 use crate::scanner::{ScanInterval, Scanner, Token};
 
 /// A node of the abstract syntax tree.
+#[derive(Debug)]
 pub struct AstNode {
     /// The children of the node.
     /// A valid number of children is decided by the kind of the node.
@@ -15,6 +16,10 @@ pub struct AstNode {
     interval: ScanInterval,
 }
 
+/// The kind of an AST node.
+/// This can be an operator, function, etc.
+#[allow(missing_docs)]
+#[derive(Debug)]
 pub enum AstNodeKind {
     /// The root node.
     Program,
@@ -93,6 +98,9 @@ pub enum AstNodeKind {
     Type { type_name: TypeName, is_array: bool },
 }
 
+/// A Mini-PL primitive type name.
+#[allow(missing_docs)]
+#[derive(Debug)]
 pub enum TypeName {
     Boolean,
     Integer,
@@ -102,13 +110,13 @@ pub enum TypeName {
 
 /// Build the AST via recursive descent parsing.
 /// The build_* methods below all build an AST node according to the LL(1) grammar.
-pub fn build_ast<CharacterIterator: Iterator<Item = char>>(
+pub fn build_ast<CharacterIterator: Iterator<Item = Result<char>>>(
     mut scanner: Scanner<CharacterIterator>,
 ) -> Result<Box<AstNode>> {
     parse_program(&mut scanner)
 }
 
-fn parse_program<CharacterIterator: Iterator<Item = char>>(
+fn parse_program<CharacterIterator: Iterator<Item = Result<char>>>(
     scanner: &mut Scanner<CharacterIterator>,
 ) -> Result<Box<AstNode>> {
     expect_token(scanner, Token::Program)?;
@@ -120,24 +128,39 @@ fn parse_program<CharacterIterator: Iterator<Item = char>>(
         children.push(match scanner.next_with_interval() {
             Some((Ok(Token::Procedure), interval)) => parse_procedure(scanner, interval),
             Some((Ok(Token::Function), interval)) => parse_function(scanner, interval),
-            Some((Ok(Token::Begin), interval)) => {main_interval = interval; break;},
-            Some((Ok(other), interval)) => Err(parser_error(interval, ParserErrorKind::UnexpectedToken { expected: vec![Token::Procedure, Token::Function, Token::Begin], found: Some(other) })),
+            Some((Ok(Token::Begin), interval)) => {
+                main_interval = interval;
+                break;
+            }
+            Some((Ok(other), interval)) => Err(parser_error(
+                interval,
+                ParserErrorKind::UnexpectedToken {
+                    expected: vec![Token::Procedure, Token::Function, Token::Begin],
+                    found: Some(other),
+                },
+            )),
             Some((Err(error), _)) => Err(error),
-            None => Err(parser_error(scanner.current_interval(), ParserErrorKind::UnexpectedToken { expected: vec![Token::Procedure, Token::Function, Token::Begin], found: None })),
+            None => Err(parser_error(
+                scanner.current_interval(),
+                ParserErrorKind::UnexpectedToken {
+                    expected: vec![Token::Procedure, Token::Function, Token::Begin],
+                    found: None,
+                },
+            )),
         }?)
     }
 
     todo!("parse main {:?}", main_interval)
 }
 
-fn parse_procedure<CharacterIterator: Iterator<Item = char>>(
+fn parse_procedure<CharacterIterator: Iterator<Item = Result<char>>>(
     scanner: &mut Scanner<CharacterIterator>,
     start_interval: ScanInterval,
 ) -> Result<Box<AstNode>> {
     todo!()
 }
 
-fn parse_function<CharacterIterator: Iterator<Item = char>>(
+fn parse_function<CharacterIterator: Iterator<Item = Result<char>>>(
     scanner: &mut Scanner<CharacterIterator>,
     start_interval: ScanInterval,
 ) -> Result<Box<AstNode>> {
@@ -145,22 +168,34 @@ fn parse_function<CharacterIterator: Iterator<Item = char>>(
 }
 
 /// Parses an identifier or predefined identifier into an identifier.
-fn parse_identifier<CharacterIterator: Iterator<Item = char>>(
+fn parse_identifier<CharacterIterator: Iterator<Item = Result<char>>>(
     scanner: &mut Scanner<CharacterIterator>,
 ) -> Result<Box<AstNode>> {
     match scanner.next_with_interval() {
-        Some((Ok(Token::Identifier(identifier)), interval)) => Ok(Box::new(AstNode::leaf(AstNodeKind::Identifier { value: identifier }, interval))),
-        Some((Ok(Token::PredefinedIdentifier(identifier)), interval)) => Ok(Box::new(AstNode::leaf(AstNodeKind::Identifier { value: identifier }, interval))),
-        Some((Ok(other), interval)) => Err(parser_error(interval, ParserErrorKind::ExpectedIdentifier {found: Some(other)})),
+        Some((Ok(Token::Identifier(identifier)), interval)) => Ok(Box::new(AstNode::leaf(
+            AstNodeKind::Identifier { value: identifier },
+            interval,
+        ))),
+        Some((Ok(Token::PredefinedIdentifier(identifier)), interval)) => Ok(Box::new(
+            AstNode::leaf(AstNodeKind::Identifier { value: identifier }, interval),
+        )),
+        Some((Ok(other), interval)) => Err(parser_error(
+            interval,
+            ParserErrorKind::ExpectedIdentifier { found: Some(other) },
+        )),
         Some((Err(error), _)) => Err(error),
-        None => Err(parser_error(scanner.current_interval(), ParserErrorKind::ExpectedIdentifier {found: None})),
+        None => Err(parser_error(
+            scanner.current_interval(),
+            ParserErrorKind::ExpectedIdentifier { found: None },
+        )),
     }
 }
 
 /// Expect the next token to be the given token.
 /// Note that this should only be used for tokens without attached data.
-fn expect_token<CharacterIterator: Iterator<Item = char>>(
-    scanner: &mut Scanner<CharacterIterator>, expected: Token,
+fn expect_token<CharacterIterator: Iterator<Item = Result<char>>>(
+    scanner: &mut Scanner<CharacterIterator>,
+    expected: Token,
 ) -> Result<()> {
     if let Some((token, interval)) = scanner.next_with_interval() {
         match token {
@@ -168,20 +203,33 @@ fn expect_token<CharacterIterator: Iterator<Item = char>>(
                 if expected == token {
                     Ok(())
                 } else {
-                    Err(parser_error(interval, ParserErrorKind::UnexpectedToken {expected: vec![expected], found: Some(token)}))
+                    Err(parser_error(
+                        interval,
+                        ParserErrorKind::UnexpectedToken {
+                            expected: vec![expected],
+                            found: Some(token),
+                        },
+                    ))
                 }
-            },
+            }
             Err(error) => Err(error),
         }
     } else {
-        Err(parser_error(scanner.current_interval(), ParserErrorKind::UnexpectedToken {expected: vec![expected], found: None}))
+        Err(parser_error(
+            scanner.current_interval(),
+            ParserErrorKind::UnexpectedToken {
+                expected: vec![expected],
+                found: None,
+            },
+        ))
     }
 }
 
 /// Expect the next token to be in the given vector.
 /// Note that this should only be used for tokens without attached data.
-fn expect_tokens<CharacterIterator: Iterator<Item = char>>(
-    scanner: &mut Scanner<CharacterIterator>, expected: Vec<Token>,
+fn expect_tokens<CharacterIterator: Iterator<Item = Result<char>>>(
+    scanner: &mut Scanner<CharacterIterator>,
+    expected: Vec<Token>,
 ) -> Result<()> {
     if let Some((token, interval)) = scanner.next_with_interval() {
         match token {
@@ -189,13 +237,25 @@ fn expect_tokens<CharacterIterator: Iterator<Item = char>>(
                 if expected.contains(&token) {
                     Ok(())
                 } else {
-                    Err(parser_error(interval, ParserErrorKind::UnexpectedToken {expected, found: Some(token)}))
+                    Err(parser_error(
+                        interval,
+                        ParserErrorKind::UnexpectedToken {
+                            expected,
+                            found: Some(token),
+                        },
+                    ))
                 }
-            },
+            }
             Err(error) => Err(error),
         }
     } else {
-        Err(parser_error(scanner.current_interval(), ParserErrorKind::UnexpectedToken {expected, found: None}))
+        Err(parser_error(
+            scanner.current_interval(),
+            ParserErrorKind::UnexpectedToken {
+                expected,
+                found: None,
+            },
+        ))
     }
 }
 
@@ -204,7 +264,8 @@ impl AstNode {
     pub fn leaf(kind: AstNodeKind, interval: ScanInterval) -> Self {
         Self {
             children: Vec::new(),
-            kind, interval
+            kind,
+            interval,
         }
     }
 }

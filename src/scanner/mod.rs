@@ -1,7 +1,8 @@
-use crate::error::{Result, scanner_error, ScannerErrorKind};
+use crate::error::{scanner_error, Result, ScannerErrorKind};
 
 /// The set of tokens output by the scanner.
 #[derive(Debug, Clone, Eq, PartialEq)]
+#[allow(missing_docs)]
 pub enum Token {
     // Punctuation
     Semicolon,
@@ -83,7 +84,7 @@ pub struct Scanner<CharacterIterator> {
     column: usize,
 }
 
-impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
+impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator> {
     /// Create and initialise a new scanner over the given input.
     /// The scanner moves to the first token right away.
     pub fn new(input: CharacterIterator) -> Result<Self> {
@@ -94,14 +95,14 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
             line: 1,
             column: 1,
         };
-        result.advance();
-        result.advance();
+        result.advance()?;
+        result.advance()?;
         result.skip_comments_and_whitespace()?;
         Ok(result)
     }
 
     /// Advances the position in the input by a single character.
-    fn advance(&mut self) {
+    fn advance(&mut self) -> Result<()> {
         if self.current == Some('\n') {
             self.line += 1;
             self.column = 1;
@@ -110,38 +111,47 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
         }
 
         self.current = self.lookahead;
-        self.lookahead = self.input.next();
+        self.lookahead = match self.input.next() {
+            None => None,
+            Some(Ok(character)) => Some(character),
+            Some(Err(error)) => return Err(error),
+        };
+        Ok(())
     }
 
     /// Advances until the current character is `None` or not a whitespace character.
-    fn skip_whitespace(&mut self) {
+    fn skip_whitespace(&mut self) -> Result<()> {
         while let Some(current) = self.current {
             if current.is_whitespace() {
-                self.advance();
+                self.advance()?;
             } else {
                 break;
             }
         }
+        Ok(())
     }
 
     /// Advances until the current character is `None` or not a whitespace character, and additionally not inside a comment.
     fn skip_comments_and_whitespace(&mut self) -> Result<()> {
         loop {
-            self.skip_whitespace();
+            self.skip_whitespace()?;
             if let (Some('{'), Some('*')) = (self.current, self.lookahead) {
                 // advance twice before first check to not accept {*} as valid comment
-                self.advance();
+                self.advance()?;
 
                 loop {
-                    self.advance();
+                    self.advance()?;
 
                     if self.lookahead.is_none() {
                         // we have reached the end of the file without being able to close the comment
-                        return Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::UnclosedComment));
+                        return Err(scanner_error(
+                            ScanInterval::single(self.line, self.column),
+                            ScannerErrorKind::UnclosedComment,
+                        ));
                     } else if (Some('*'), Some('}')) == (self.current, self.lookahead) {
                         // advance twice to move completely out of comment
-                        self.advance();
-                        self.advance();
+                        self.advance()?;
+                        self.advance()?;
                         // return to outer loop to check for more whitespace or comments
                         break;
                     }
@@ -149,7 +159,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
                     // if we found no end of the comment, we continue searching
                 }
 
-                self.skip_whitespace();
+                self.skip_whitespace()?;
             } else {
                 return Ok(());
             }
@@ -177,26 +187,29 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
                 break;
             }
 
-            self.advance();
+            self.advance()?;
         }
 
         if found_dot {
             // unwrap cannot fail, as we push at least one character right after construction
             if literal.ends_with('.') {
                 // the number part of the literal must start and end with a digit
-                return Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::MalformedRealLiteral));
+                return Err(scanner_error(
+                    ScanInterval::single(self.line, self.column),
+                    ScannerErrorKind::MalformedRealLiteral,
+                ));
             }
 
             // check if there is an exponent
             if self.lookahead == Some('e') {
                 literal.push('e');
-                self.advance();
+                self.advance()?;
 
                 // optionally add a sign to the exponent
                 if let Some(lookahead) = self.lookahead {
                     if lookahead == '+' || lookahead == '-' {
                         literal.push(lookahead);
-                        self.advance();
+                        self.advance()?;
                     }
                 }
 
@@ -206,14 +219,17 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
                     if lookahead.is_digit(10) {
                         found_digit = true;
                         literal.push(lookahead);
-                        self.advance();
+                        self.advance()?;
                     } else {
                         break;
                     }
                 }
 
                 if !found_digit {
-                    return Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::MalformedRealLiteral));
+                    return Err(scanner_error(
+                        ScanInterval::single(self.line, self.column),
+                        ScannerErrorKind::MalformedRealLiteral,
+                    ));
                 }
             }
 
@@ -233,23 +249,27 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
         assert_eq!(self.current, Some('"'));
 
         let mut literal = String::new();
-        self.advance();
+        self.advance()?;
 
         while let Some(current) = self.current {
             if current == '\\' && self.lookahead == Some('"') {
                 literal.push_str("\\\"");
-                self.advance();
+                self.advance()?;
             } else if current == '"' {
                 return Ok(Token::StringLiteral(literal));
             } else {
                 literal.push(current);
             }
 
-            self.advance();
+            self.advance()?;
         }
 
-        Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::UnclosedStringLiteral))
+        Err(scanner_error(
+            ScanInterval::single(self.line, self.column),
+            ScannerErrorKind::UnclosedStringLiteral,
+        ))
     }
+
     /// This function parses the alphanumeric token starting with the current alphabetic character,
     /// and advances the iterator until current is the last character of the token.
     /// (The iterator is advanced by one after parsing a token successfully, so we cannot advance it to after the token in this function)
@@ -265,7 +285,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
         while let Some(lookahead) = self.lookahead {
             if lookahead.is_ascii_alphanumeric() || lookahead == '_' {
                 literal.push(lookahead);
-                self.advance();
+                self.advance()?;
             } else {
                 break;
             }
@@ -299,6 +319,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
         })
     }
 
+    /// Return the next token along with the interval it spans in the source code.
     pub fn next_with_interval(&mut self) -> Option<(Result<Token>, ScanInterval)> {
         let start_line = self.line;
         let start_column = self.column;
@@ -306,7 +327,10 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
         let end_line = self.line;
         let end_column = self.column;
         let interval = ScanInterval {
-            start_line, start_column, end_line, end_column,
+            start_line,
+            start_column,
+            end_line,
+            end_column,
         };
 
         match token {
@@ -321,7 +345,7 @@ impl<CharacterIterator: Iterator<Item = char>> Scanner<CharacterIterator> {
     }
 }
 
-impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIterator> {
+impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<CharacterIterator> {
     type Item = Result<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -338,7 +362,7 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                 ',' => Token::Comma,
                 ':' => {
                     if self.lookahead == Some('=') {
-                        self.advance();
+                        if let Err(error) = self.advance() {return Some(Err(error));}
                         Token::AssignOperator
                     } else {
                         Token::Colon
@@ -357,10 +381,10 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                 '=' => Token::EqOperator,
                 '<' => {
                     if self.lookahead == Some('>') {
-                        self.advance();
+                        if let Err(error) = self.advance() {return Some(Err(error));}
                         Token::NeqOperator
                     } else if self.lookahead == Some('=') {
-                        self.advance();
+                        if let Err(error) = self.advance() {return Some(Err(error));}
                         Token::LeqOperator
                     } else {
                         Token::LtOperator
@@ -368,7 +392,7 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                 }
                 '>' => {
                     if self.lookahead == Some('=') {
-                        self.advance();
+                        if let Err(error) = self.advance() {return Some(Err(error));}
                         Token::GeqOperator
                     } else {
                         Token::GtOperator
@@ -398,13 +422,16 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
                             error => return Some(error),
                         }
                     } else {
-                        return Some(Err(scanner_error(ScanInterval::single(self.line, self.column), ScannerErrorKind::NotTheStartOfAToken)));
+                        return Some(Err(scanner_error(
+                            ScanInterval::single(self.line, self.column),
+                            ScannerErrorKind::NotTheStartOfAToken,
+                        )));
                     }
                 }
             }));
 
             // advance if a token was successfully detected
-            self.advance();
+            if let Err(error) = self.advance() {return Some(Err(error));}
             result
         } else {
             // If there are no characters left, we are done.
@@ -412,7 +439,6 @@ impl<CharacterIterator: Iterator<Item = char>> Iterator for Scanner<CharacterIte
         }
     }
 }
-
 
 /// The interval a scanned token takes up in the source file.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -447,7 +473,7 @@ mod tests {
     #[test]
     fn test_large_program() {
         let program = "program na_5_rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"(abc)0.1e-3+  \n\t";
-        let scanner = Scanner::new(program.chars());
+        let scanner = Scanner::new(program.chars().map(|character| Ok(character))).unwrap();
         let tokens: Vec<_> = scanner.map(|token| token.unwrap()).collect();
         use Token::*;
         assert_eq!(
@@ -514,4 +540,3 @@ mod tests {
         );
     }
 }
-
