@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::Error;
-use std::io::{Read};
+use std::io::Read;
 
 /// An iterator over some input.
 /// The iterator transforms the input into unicode characters, assuming the input is encoded in UTF-8.
@@ -39,6 +39,8 @@ impl<Source: Read> Iterator for ReadIterator<Source> {
             }
         }
 
-        Some(Err(Error::InvalidUtf8Character {invalid: char_buffer}))
+        Some(Err(Error::InvalidUtf8Character {
+            invalid: char_buffer,
+        }))
     }
 }

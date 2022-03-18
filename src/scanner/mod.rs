@@ -362,7 +362,9 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<Char
                 ',' => Token::Comma,
                 ':' => {
                     if self.lookahead == Some('=') {
-                        if let Err(error) = self.advance() {return Some(Err(error));}
+                        if let Err(error) = self.advance() {
+                            return Some(Err(error));
+                        }
                         Token::AssignOperator
                     } else {
                         Token::Colon
@@ -381,10 +383,14 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<Char
                 '=' => Token::EqOperator,
                 '<' => {
                     if self.lookahead == Some('>') {
-                        if let Err(error) = self.advance() {return Some(Err(error));}
+                        if let Err(error) = self.advance() {
+                            return Some(Err(error));
+                        }
                         Token::NeqOperator
                     } else if self.lookahead == Some('=') {
-                        if let Err(error) = self.advance() {return Some(Err(error));}
+                        if let Err(error) = self.advance() {
+                            return Some(Err(error));
+                        }
                         Token::LeqOperator
                     } else {
                         Token::LtOperator
@@ -392,7 +398,9 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<Char
                 }
                 '>' => {
                     if self.lookahead == Some('=') {
-                        if let Err(error) = self.advance() {return Some(Err(error));}
+                        if let Err(error) = self.advance() {
+                            return Some(Err(error));
+                        }
                         Token::GeqOperator
                     } else {
                         Token::GtOperator
@@ -431,7 +439,9 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<Char
             }));
 
             // advance if a token was successfully detected
-            if let Err(error) = self.advance() {return Some(Err(error));}
+            if let Err(error) = self.advance() {
+                return Some(Err(error));
+            }
             result
         } else {
             // If there are no characters left, we are done.

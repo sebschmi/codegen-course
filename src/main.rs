@@ -2,13 +2,13 @@
 #![warn(missing_docs)]
 
 use crate::error::{Error, Result};
+use crate::io::ReadIterator;
+use crate::parser::build_ast;
 use crate::scanner::Scanner;
 use clap::Parser;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
-use crate::io::ReadIterator;
-use crate::parser::build_ast;
 
 /// The error types used by the compiler.
 pub mod error;

@@ -77,7 +77,7 @@ pub enum Error {
     /// An invalid utf8 character was found in the input.
     InvalidUtf8Character {
         invalid: u32,
-    }
+    },
 }
 
 impl From<ScannerError> for Error {
