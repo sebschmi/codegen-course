@@ -237,14 +237,18 @@ fn parse_type(
     match scanner.next_with_interval() {
         Some((Ok(Token::Array), interval)) => {
             expect_token(scanner, Token::OpenBracket)?;
-            let children = match scanner.next_with_interval() {
+            let children = match scanner.peek_with_interval() {
                 Some((Ok(Token::CloseBracket), _)) => vec![],
                 Some((Ok(other), interval)) => {
-                    let result = vec![parse_expression(scanner, interval, other)?];
-                    expect_token(scanner, Token::CloseBracket)?;
+                    let result = vec![parse_expression(scanner, interval)?];
                     result
                 }
-                Some((Err(error), _)) => return Err(error),
+                Some((Err(error), _)) => {
+                    return Err(scanner
+                        .next()
+                        .expect("peek() returned Some, so next() must also return Some")
+                        .expect_err("peek() returned Err, so next() must also return Err"))
+                }
                 None => {
                     return Err(parser_error(
                         scanner.current_interval(),
@@ -252,6 +256,7 @@ fn parse_type(
                     ))
                 }
             };
+            expect_token(scanner, Token::CloseBracket)?;
             expect_token(scanner, Token::Of)?;
 
             // recurse to parse the type of the array
@@ -302,7 +307,6 @@ fn parse_type(
 fn parse_expression(
     scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     start_interval: ScanInterval,
-    first_token: Token,
 ) -> Result<Box<AstNode>> {
     todo!()
 }

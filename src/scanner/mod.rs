@@ -90,6 +90,13 @@ pub struct Scanner<CharacterIterator> {
     line: usize,
     /// The column the current character is at.
     column: usize,
+
+    /// The next value of the iteration, to allow for peekable iteration.
+    next: Option<Result<Token>>,
+    /// If `next` is not `None`, then this stores the line before next was computed.
+    previous_line: Option<usize>,
+    /// If `next` is not `None`, then this stores the column before next was computed.
+    previous_column: Option<usize>,
 }
 
 impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator> {
@@ -102,6 +109,9 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
             lookahead: None,
             line: 1,
             column: 1,
+            next: None,
+            previous_line: None,
+            previous_column: None,
         };
         result.advance()?;
         result.advance()?;
@@ -336,11 +346,11 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
 
     /// Return the next token along with the interval it spans in the source code.
     pub fn next_with_interval(&mut self) -> Option<(Result<Token>, ScanInterval)> {
-        let start_line = self.line;
-        let start_column = self.column;
+        let start_line = self.previous_line.unwrap_or(self.line);
+        let start_column = self.previous_column.unwrap_or(self.column);
         let token = self.next();
-        let end_line = self.line;
-        let end_column = self.column;
+        let end_line = self.previous_line.unwrap_or(self.line);
+        let end_column = self.previous_column.unwrap_or(self.column);
         let interval = ScanInterval {
             start_line,
             start_column,
@@ -354,16 +364,33 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
         }
     }
 
-    /// Returns the current character as [ScanInterval].
-    pub fn current_interval(&self) -> ScanInterval {
-        ScanInterval::single(self.line, self.column)
+    /// Peek at the next token along with the interval it spans in the source code, without advancing the iterator.
+    pub fn peek_with_interval(&mut self) -> Option<(&Result<Token>, ScanInterval)> {
+        self.peek();
+        // due to limits in Rust's lifetime model,
+        // we need to drop the mutable borrow to self here by ignoring the return value of self.peek(),
+        // and reborrow self as immutable
+        if let Some(next) = &self.next {
+            // position before the peeked token
+            let mut interval = self.current_interval();
+            interval.end_line = self.line;
+            interval.end_column = self.column;
+            Some((next, interval))
+        } else {
+            None
+        }
     }
-}
 
-impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<CharacterIterator> {
-    type Item = Result<Token>;
+    /// Returns the current character as [ScanInterval].
+    /// This is the current character of the iteration, meaning that this does not change if [peek](Self::peek) is used.
+    pub fn current_interval(&self) -> ScanInterval {
+        ScanInterval::single(
+            self.previous_line.unwrap_or(self.line),
+            self.previous_column.unwrap_or(self.column),
+        )
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
+    fn compute_next(&mut self) -> Option<Result<Token>> {
         if let Err(error) = self.skip_comments_and_whitespace() {
             return Some(Err(error));
         }
@@ -461,6 +488,31 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<Char
         } else {
             // If there are no characters left, we are done.
             None
+        }
+    }
+
+    /// Returns the current head of the iterator, without advancing it.
+    pub fn peek(&mut self) -> Option<&Result<Token>> {
+        if self.next.is_none() {
+            self.previous_line = Some(self.line);
+            self.previous_column = Some(self.column);
+            self.next = self.compute_next();
+        }
+
+        self.next.as_ref()
+    }
+}
+
+impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<CharacterIterator> {
+    type Item = Result<Token>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(next) = self.next.take() {
+            self.previous_line = None;
+            self.previous_column = None;
+            Some(next)
+        } else {
+            self.compute_next()
         }
     }
 }
