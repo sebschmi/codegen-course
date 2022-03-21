@@ -49,6 +49,7 @@ pub enum Token {
     While,
     Do,
     Array,
+    Of,
     Return,
 
     // Literals
@@ -311,6 +312,7 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
             "while" => Token::While,
             "do" => Token::Do,
             "array" => Token::Array,
+            "of" => Token::Of,
             "return" => Token::Return,
             "or" => Token::OrOperator,
             "and" => Token::AndOperator,
