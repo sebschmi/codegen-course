@@ -57,6 +57,9 @@ pub enum ParserErrorKind {
 
     /// Expected an identifier, but found something else.
     ExpectedIdentifier { found: Option<Token> },
+
+    /// Expected a type identifier, but found a different identifier.
+    ExpectedTypeName { found: Option<Token> },
 }
 
 /// A convenience function for creating parser errors.

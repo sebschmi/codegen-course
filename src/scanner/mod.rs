@@ -1,4 +1,5 @@
 use crate::error::{scanner_error, Result, ScannerErrorKind};
+use std::cmp::Ordering;
 
 /// The set of tokens output by the scanner.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -486,6 +487,33 @@ impl ScanInterval {
             start_column: column,
             end_column: column + 1,
         }
+    }
+
+    /// Extend the interval with the given interval, returning a new instance.
+    /// The result will have the minimum start position and maximum end position of the two intervals, even if they do not overlap.
+    pub fn extend_clone(&self, other: &ScanInterval) -> Self {
+        let mut result = self.clone();
+        match result.start_line.cmp(&other.start_line) {
+            Ordering::Less => {}
+            Ordering::Equal => {
+                result.start_column = result.start_column.min(other.start_column);
+            }
+            Ordering::Greater => {
+                result.start_line = other.start_line;
+                result.start_column = other.start_column;
+            }
+        }
+        match result.end_line.cmp(&other.end_line) {
+            Ordering::Less => {
+                result.end_line = other.end_line;
+                result.end_column = other.end_column;
+            }
+            Ordering::Equal => {
+                result.end_column = result.end_column.max(other.end_column);
+            }
+            Ordering::Greater => {}
+        }
+        result
     }
 }
 
