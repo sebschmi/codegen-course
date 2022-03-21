@@ -110,14 +110,12 @@ pub enum TypeName {
 
 /// Build the AST via recursive descent parsing.
 /// The build_* methods below all build an AST node according to the LL(1) grammar.
-pub fn build_ast<CharacterIterator: Iterator<Item = Result<char>>>(
-    mut scanner: Scanner<CharacterIterator>,
-) -> Result<Box<AstNode>> {
+pub fn build_ast(mut scanner: Scanner<impl Iterator<Item = Result<char>>>) -> Result<Box<AstNode>> {
     parse_program(&mut scanner)
 }
 
-fn parse_program<CharacterIterator: Iterator<Item = Result<char>>>(
-    scanner: &mut Scanner<CharacterIterator>,
+fn parse_program(
+    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
 ) -> Result<Box<AstNode>> {
     expect_token(scanner, Token::Program)?;
     let mut children = vec![parse_identifier(scanner)?];
@@ -153,23 +151,23 @@ fn parse_program<CharacterIterator: Iterator<Item = Result<char>>>(
     todo!("parse main {:?}", main_interval)
 }
 
-fn parse_procedure<CharacterIterator: Iterator<Item = Result<char>>>(
-    scanner: &mut Scanner<CharacterIterator>,
+fn parse_procedure(
+    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     start_interval: ScanInterval,
 ) -> Result<Box<AstNode>> {
     todo!()
 }
 
-fn parse_function<CharacterIterator: Iterator<Item = Result<char>>>(
-    scanner: &mut Scanner<CharacterIterator>,
+fn parse_function(
+    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     start_interval: ScanInterval,
 ) -> Result<Box<AstNode>> {
     todo!()
 }
 
 /// Parses an identifier or predefined identifier into an identifier.
-fn parse_identifier<CharacterIterator: Iterator<Item = Result<char>>>(
-    scanner: &mut Scanner<CharacterIterator>,
+fn parse_identifier(
+    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
 ) -> Result<Box<AstNode>> {
     match scanner.next_with_interval() {
         Some((Ok(Token::Identifier(identifier)), interval)) => Ok(Box::new(AstNode::leaf(
@@ -193,8 +191,8 @@ fn parse_identifier<CharacterIterator: Iterator<Item = Result<char>>>(
 
 /// Expect the next token to be the given token.
 /// Note that this should only be used for tokens without attached data.
-fn expect_token<CharacterIterator: Iterator<Item = Result<char>>>(
-    scanner: &mut Scanner<CharacterIterator>,
+fn expect_token(
+    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     expected: Token,
 ) -> Result<()> {
     if let Some((token, interval)) = scanner.next_with_interval() {
@@ -227,8 +225,8 @@ fn expect_token<CharacterIterator: Iterator<Item = Result<char>>>(
 
 /// Expect the next token to be in the given vector.
 /// Note that this should only be used for tokens without attached data.
-fn expect_tokens<CharacterIterator: Iterator<Item = Result<char>>>(
-    scanner: &mut Scanner<CharacterIterator>,
+fn expect_tokens(
+    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     expected: Vec<Token>,
 ) -> Result<()> {
     if let Some((token, interval)) = scanner.next_with_interval() {
