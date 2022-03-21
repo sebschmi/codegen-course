@@ -59,8 +59,14 @@ pub enum Token {
     StringLiteral(String), // enclosed by '"', where certain characters can be escaped with '\', including '"'
 
     // Identifiers
-    Identifier(String), // starting with a letter, otherwise mixture of letter, digit and underscores
-    PredefinedIdentifier(String), // like an identifier, but the special predefined case of Mini-PL
+    Identifier {
+        original: String,
+        lower_case: String,
+    }, // starting with a letter, otherwise mixture of letter, digit and underscores
+    PredefinedIdentifier {
+        original: String,
+        lower_case: String,
+    }, // like an identifier, but the special predefined case of Mini-PL
 }
 
 /// The type used for input scanning.
@@ -314,8 +320,14 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
             // we transform everything to lower case, since identifiers are case-insensitive
             // Boolean has an uppercase B as specified
             "true" | "false" | "Boolean" | "integer" | "real" | "string" | "read" | "writeln"
-            | "size" => Token::PredefinedIdentifier(literal.to_ascii_lowercase()),
-            _ => Token::Identifier(literal.to_ascii_lowercase()),
+            | "size" => Token::PredefinedIdentifier {
+                lower_case: literal.to_ascii_lowercase(),
+                original: literal.to_owned(),
+            },
+            _ => Token::Identifier {
+                lower_case: literal.to_ascii_lowercase(),
+                original: literal.to_owned(),
+            },
         })
     }
 
@@ -482,7 +494,7 @@ mod tests {
 
     #[test]
     fn test_large_program() {
-        let program = "program na_5_rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"(abc)0.1e-3+  \n\t";
+        let program = "program na_5_Rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"(abc)0.1e-3+  \n\t";
         let scanner = Scanner::new(program.chars().map(|character| Ok(character))).unwrap();
         let tokens: Vec<_> = scanner.map(|token| token.unwrap()).collect();
         use Token::*;
@@ -490,16 +502,37 @@ mod tests {
             tokens,
             vec![
                 Program,
-                Identifier("na_5_rr4_".to_string()),
+                Identifier {
+                    lower_case: "na_5_rr4_".to_string(),
+                    original: "na_5_Rr4_".to_string()
+                },
                 Semicolon,
-                Identifier("functionand".to_string()),
+                Identifier {
+                    lower_case: "functionand".to_string(),
+                    original: "functionand".to_string()
+                },
                 AndOperator,
                 Function,
-                PredefinedIdentifier("boolean".to_string()),
-                Identifier("boolean".to_string()),
-                PredefinedIdentifier("true".to_string()),
-                Identifier("false".to_string()),
-                PredefinedIdentifier("false".to_string()),
+                PredefinedIdentifier {
+                    lower_case: "boolean".to_string(),
+                    original: "Boolean".to_string()
+                },
+                Identifier {
+                    lower_case: "boolean".to_string(),
+                    original: "boolean".to_string()
+                },
+                PredefinedIdentifier {
+                    lower_case: "true".to_string(),
+                    original: "true".to_string()
+                },
+                Identifier {
+                    lower_case: "false".to_string(),
+                    original: "False".to_string()
+                },
+                PredefinedIdentifier {
+                    lower_case: "false".to_string(),
+                    original: "false".to_string()
+                },
                 AndOperator,
                 Procedure,
                 OpenParenthesis,
@@ -517,11 +550,20 @@ mod tests {
                 OpenBrace,
                 OpenBracket,
                 CloseBrace,
-                Identifier("ab".to_string()),
+                Identifier {
+                    lower_case: "ab".to_string(),
+                    original: "ab".to_string()
+                },
                 Dot,
-                PredefinedIdentifier("size".to_string()),
+                PredefinedIdentifier {
+                    lower_case: "size".to_string(),
+                    original: "size".to_string()
+                },
                 PlusOperator,
-                PredefinedIdentifier("size".to_string()),
+                PredefinedIdentifier {
+                    lower_case: "size".to_string(),
+                    original: "size".to_string()
+                },
                 PlusOperator,
                 Dot,
                 MinusOperator,
@@ -542,7 +584,10 @@ mod tests {
                 RealLiteral("5.4e+3".to_string()),
                 StringLiteral(" \\\" \\\\ £$€@".to_string()),
                 OpenParenthesis,
-                Identifier("abc".to_string()),
+                Identifier {
+                    lower_case: "abc".to_string(),
+                    original: "abc".to_string()
+                },
                 CloseParenthesis,
                 RealLiteral("0.1e-3".to_string()),
                 PlusOperator,
