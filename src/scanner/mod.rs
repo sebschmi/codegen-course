@@ -358,10 +358,7 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
             end_column,
         };
 
-        match token {
-            Some(token) => Some((token, interval)),
-            None => None,
-        }
+        token.map(|token| (token, interval))
     }
 
     /// Peek at the next token along with the interval it spans in the source code, without advancing the iterator.
@@ -577,7 +574,7 @@ mod tests {
     #[test]
     fn test_large_program() {
         let program = "program na_5_Rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"(abc)0.1e-3+  \n\t";
-        let scanner = Scanner::new(program.chars().map(|character| Ok(character))).unwrap();
+        let scanner = Scanner::new(program.chars().map(Ok)).unwrap();
         let tokens: Vec<_> = scanner.map(|token| token.unwrap()).collect();
         use Token::*;
         assert_eq!(

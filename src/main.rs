@@ -30,8 +30,7 @@ struct Configuration {
 fn main() -> Result<()> {
     let configuration = Configuration::parse();
 
-    let input =
-        BufReader::new(File::open(&configuration.input).map_err(|error| Error::ReadError(error))?);
+    let input = BufReader::new(File::open(&configuration.input).map_err(Error::ReadError)?);
     let scanner = Scanner::new(ReadIterator::new(input))?;
     let ast = build_ast(scanner)?;
 

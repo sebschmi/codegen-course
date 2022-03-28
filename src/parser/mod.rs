@@ -7,7 +7,7 @@ use crate::scanner::{ScanInterval, Scanner, Token};
 pub struct AstNode {
     /// The children of the node.
     /// A valid number of children is decided by the kind of the node.
-    children: Vec<Box<AstNode>>,
+    children: Vec<AstNode>,
 
     /// The kind of the node.
     kind: AstNodeKind,
@@ -128,13 +128,11 @@ pub enum PrimitiveTypeName {
 
 /// Build the AST via recursive descent parsing.
 /// The build_* methods below all build an AST node according to the LL(1) grammar.
-pub fn build_ast(mut scanner: Scanner<impl Iterator<Item = Result<char>>>) -> Result<Box<AstNode>> {
+pub fn build_ast(mut scanner: Scanner<impl Iterator<Item = Result<char>>>) -> Result<AstNode> {
     parse_program(&mut scanner)
 }
 
-fn parse_program(
-    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
-) -> Result<Box<AstNode>> {
+fn parse_program(scanner: &mut Scanner<impl Iterator<Item = Result<char>>>) -> Result<AstNode> {
     let start_interval = scanner.current_interval();
     expect_token(scanner, Token::Program)?;
     let mut children = vec![parse_identifier(scanner)?];
@@ -171,17 +169,17 @@ fn parse_program(
     expect_token(scanner, Token::Dot)?;
     let total_interval = start_interval.extend_clone(&scanner.current_interval());
 
-    Ok(Box::new(AstNode {
+    Ok(AstNode {
         children,
         kind: AstNodeKind::Program,
         interval: total_interval,
-    }))
+    })
 }
 
 fn parse_procedure(
     scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     start_interval: ScanInterval,
-) -> Result<Box<AstNode>> {
+) -> Result<AstNode> {
     let mut children = vec![parse_identifier(scanner)?];
     expect_token(scanner, Token::OpenParenthesis)?;
     children.push(parse_parameters(scanner)?);
@@ -193,17 +191,17 @@ fn parse_procedure(
     expect_token(scanner, Token::Semicolon)?;
     let total_interval = start_interval.extend_clone(&scanner.current_interval());
 
-    Ok(Box::new(AstNode {
+    Ok(AstNode {
         children,
         kind: AstNodeKind::Procedure,
         interval: total_interval,
-    }))
+    })
 }
 
 fn parse_function(
     scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     start_interval: ScanInterval,
-) -> Result<Box<AstNode>> {
+) -> Result<AstNode> {
     let mut children = vec![parse_identifier(scanner)?];
     expect_token(scanner, Token::OpenParenthesis)?;
     children.push(parse_parameters(scanner)?);
@@ -217,27 +215,25 @@ fn parse_function(
     expect_token(scanner, Token::Semicolon)?;
     let total_interval = start_interval.extend_clone(&scanner.current_interval());
 
-    Ok(Box::new(AstNode {
+    Ok(AstNode {
         children,
         kind: AstNodeKind::Procedure,
         interval: total_interval,
-    }))
+    })
 }
 
-fn parse_parameters(
-    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
-) -> Result<Box<AstNode>> {
+fn parse_parameters(scanner: &mut Scanner<impl Iterator<Item = Result<char>>>) -> Result<AstNode> {
     todo!()
 }
 
 fn parse_block(
     scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     start_interval: ScanInterval,
-) -> Result<Box<AstNode>> {
+) -> Result<AstNode> {
     todo!()
 }
 
-fn parse_type(scanner: &mut Scanner<impl Iterator<Item = Result<char>>>) -> Result<Box<AstNode>> {
+fn parse_type(scanner: &mut Scanner<impl Iterator<Item = Result<char>>>) -> Result<AstNode> {
     let (type_name, children, interval) = match scanner.peek_with_interval() {
         Some((Ok(Token::Array), interval)) => {
             scanner.next();
@@ -300,11 +296,11 @@ fn parse_type(scanner: &mut Scanner<impl Iterator<Item = Result<char>>>) -> Resu
         }
     }?;
 
-    Ok(Box::new(AstNode {
+    Ok(AstNode {
         children,
         kind: AstNodeKind::Type { type_name },
         interval,
-    }))
+    })
 }
 
 fn parse_primitive_type(
@@ -344,14 +340,12 @@ fn parse_primitive_type(
 fn parse_expression(
     scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     start_interval: ScanInterval,
-) -> Result<Box<AstNode>> {
+) -> Result<AstNode> {
     todo!()
 }
 
 /// Parses an identifier or predefined identifier into an identifier.
-fn parse_identifier(
-    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
-) -> Result<Box<AstNode>> {
+fn parse_identifier(scanner: &mut Scanner<impl Iterator<Item = Result<char>>>) -> Result<AstNode> {
     match scanner.next_with_interval() {
         Some((
             Ok(Token::Identifier {
@@ -359,26 +353,26 @@ fn parse_identifier(
                 lower_case,
             }),
             interval,
-        )) => Ok(Box::new(AstNode::leaf(
+        )) => Ok(AstNode::leaf(
             AstNodeKind::Identifier {
                 original,
                 lower_case,
             },
             interval,
-        ))),
+        )),
         Some((
             Ok(Token::PredefinedIdentifier {
                 original,
                 lower_case,
             }),
             interval,
-        )) => Ok(Box::new(AstNode::leaf(
+        )) => Ok(AstNode::leaf(
             AstNodeKind::Identifier {
                 original,
                 lower_case,
             },
             interval,
-        ))),
+        )),
         Some((Ok(other), interval)) => Err(parser_error(
             interval,
             ParserErrorKind::ExpectedIdentifier { found: Some(other) },
