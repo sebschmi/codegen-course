@@ -101,18 +101,25 @@ pub enum AstNodeKind {
         lower_case: String,
     },
     /// The name of a type.
-    Type {
-        type_name: TypeName,
-        /// True if this type is an array.
-        /// This variable is required because unsized arrays cannot be distinguished from plain types in the AST.
-        is_array: bool,
-    },
+    Type { type_name: TypeName },
 }
 
 /// A Mini-PL primitive type name.
 #[allow(missing_docs)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum TypeName {
+    /// A primitive type.
+    Primitive { primitive_type: PrimitiveTypeName },
+    /// An unsized array.
+    UnsizedArray { primitive_type: PrimitiveTypeName },
+    /// A statically sized array of a specific primitive type.
+    SizedArray { primitive_type: PrimitiveTypeName },
+}
+
+/// A Mini-PL primitive type name.
+#[allow(missing_docs)]
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum PrimitiveTypeName {
     Boolean,
     Integer,
     Real,
@@ -202,7 +209,7 @@ fn parse_function(
     children.push(parse_parameters(scanner)?);
     expect_token(scanner, Token::CloseParenthesis)?;
     expect_token(scanner, Token::Colon)?;
-    children.push(parse_type(scanner, false)?);
+    children.push(parse_type(scanner)?);
     expect_token(scanner, Token::Semicolon)?;
     let block_start = scanner.current_interval();
     expect_token(scanner, Token::Begin)?;
@@ -230,12 +237,10 @@ fn parse_block(
     todo!()
 }
 
-fn parse_type(
-    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
-    is_array: bool,
-) -> Result<Box<AstNode>> {
-    match scanner.next_with_interval() {
+fn parse_type(scanner: &mut Scanner<impl Iterator<Item = Result<char>>>) -> Result<Box<AstNode>> {
+    let (type_name, children, interval) = match scanner.peek_with_interval() {
         Some((Ok(Token::Array), interval)) => {
+            scanner.next();
             expect_token(scanner, Token::OpenBracket)?;
             let children = match scanner.peek_with_interval() {
                 Some((Ok(Token::CloseBracket), _)) => vec![],
@@ -257,21 +262,61 @@ fn parse_type(
                 }
             };
             expect_token(scanner, Token::CloseBracket)?;
-            expect_token(scanner, Token::Of)?;
+            let last_interval = expect_token(scanner, Token::Of)?;
 
-            // recurse to parse the type of the array
-            // this allows to create multidimensional arrays, which need to be filtered later
-            let mut result = parse_type(scanner, true)?;
-            result.children = children;
-            result.interval = result.interval.extend_clone(&interval);
-            Ok(result)
+            // parse the primitive type of the array
+            let type_name = parse_primitive_type(scanner)?;
+            let type_name = if children.is_empty() {
+                TypeName::UnsizedArray {
+                    primitive_type: type_name,
+                }
+            } else {
+                TypeName::SizedArray {
+                    primitive_type: type_name,
+                }
+            };
+            Ok((type_name, children, interval.extend_clone(&last_interval)))
         }
+        Some((Ok(Token::PredefinedIdentifier { .. }), interval)) => Ok((
+            TypeName::Primitive {
+                primitive_type: parse_primitive_type(scanner)?,
+            },
+            vec![],
+            interval,
+        )),
+        Some((Ok(_), interval)) => Err(parser_error(
+            interval,
+            ParserErrorKind::ExpectedTypeName {
+                found: Some(scanner.next().unwrap().unwrap()),
+            },
+        )),
+        Some((Err(_), _)) => Err(scanner.next().unwrap().unwrap_err()),
+        None => {
+            scanner.next();
+            Err(parser_error(
+                scanner.current_interval(),
+                ParserErrorKind::ExpectedTypeName { found: None },
+            ))
+        }
+    }?;
+
+    Ok(Box::new(AstNode {
+        children,
+        kind: AstNodeKind::Type { type_name },
+        interval,
+    }))
+}
+
+fn parse_primitive_type(
+    scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
+) -> Result<PrimitiveTypeName> {
+    match scanner.next_with_interval() {
         Some((Ok(ref token @ Token::PredefinedIdentifier { ref original, .. }), interval)) => {
-            let type_name = match original.as_str() {
-                "Boolean" => TypeName::Boolean,
-                "integer" => TypeName::Integer,
-                "real" => TypeName::Real,
-                "string" => TypeName::String,
+            Ok(match original.as_str() {
+                "Boolean" => PrimitiveTypeName::Boolean,
+                "integer" => PrimitiveTypeName::Integer,
+                "real" => PrimitiveTypeName::Real,
+                "string" => PrimitiveTypeName::String,
                 // pattern matching and lifetimes don't work as well together yet, so we need to take the pattern by reference and clone here
                 _ => {
                     return Err(parser_error(
@@ -281,17 +326,9 @@ fn parse_type(
                         },
                     ))
                 }
-            };
-
-            Ok(Box::new(AstNode {
-                children: vec![],
-                kind: AstNodeKind::Type {
-                    type_name,
-                    is_array,
-                },
-                interval,
-            }))
+            })
         }
+
         Some((Ok(other), interval)) => Err(parser_error(
             interval,
             ParserErrorKind::ExpectedTypeName { found: Some(other) },
@@ -359,12 +396,12 @@ fn parse_identifier(
 fn expect_token(
     scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     expected: Token,
-) -> Result<()> {
+) -> Result<ScanInterval> {
     if let Some((token, interval)) = scanner.next_with_interval() {
         match token {
             Ok(token) => {
                 if expected == token {
-                    Ok(())
+                    Ok(interval)
                 } else {
                     Err(parser_error(
                         interval,
@@ -393,12 +430,12 @@ fn expect_token(
 fn expect_tokens(
     scanner: &mut Scanner<impl Iterator<Item = Result<char>>>,
     expected: Vec<Token>,
-) -> Result<()> {
+) -> Result<ScanInterval> {
     if let Some((token, interval)) = scanner.next_with_interval() {
         match token {
             Ok(token) => {
                 if expected.contains(&token) {
-                    Ok(())
+                    Ok(interval)
                 } else {
                     Err(parser_error(
                         interval,
