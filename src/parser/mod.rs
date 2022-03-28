@@ -27,8 +27,10 @@ pub enum AstNodeKind {
     /// The root node.
     Program,
     /// A function without return value.
+    /// Its children are its identifier and each single parameter.
     Procedure,
     /// A function with return value.
+    /// Its children are its identifier, each single parameter, and then its return type.
     Function,
     /// A variable function parameter (passed by reference).
     VarParameter,
@@ -183,7 +185,7 @@ fn parse_procedure(
 ) -> Result<AstNode> {
     let mut children = vec![parse_identifier(scanner)?];
     expect_token(scanner, Token::OpenParenthesis)?;
-    children.push(parse_parameters(scanner)?);
+    children.extend(parse_parameters(scanner)?);
     expect_token(scanner, Token::CloseParenthesis)?;
     expect_token(scanner, Token::Semicolon)?;
     let block_start = expect_token(scanner, Token::Begin)?;
@@ -204,7 +206,7 @@ fn parse_function(
 ) -> Result<AstNode> {
     let mut children = vec![parse_identifier(scanner)?];
     expect_token(scanner, Token::OpenParenthesis)?;
-    children.push(parse_parameters(scanner)?);
+    children.extend(parse_parameters(scanner)?);
     expect_token(scanner, Token::CloseParenthesis)?;
     expect_token(scanner, Token::Colon)?;
     children.push(parse_type(scanner)?);
@@ -221,10 +223,66 @@ fn parse_function(
     })
 }
 
+/// Parse the parameters of a function as a vector of [AstNode]s.
+/// There is no separate node for a parameter list, that is why we return a plain vector here.
 fn parse_parameters(
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
+) -> Result<Vec<AstNode>> {
+    let mut children = Vec::new();
+
+    loop {
+        match scanner.peek() {
+            Some((Ok(Token::CloseParenthesis), _)) => break,
+            Some(_) => {
+                children.push(parse_parameter(scanner)?);
+                if let Some((Ok(Token::Comma), _)) = scanner.peek() {
+                    // a comma means there is another parameter, so we can continue the loop
+                    scanner.next();
+                    // we need to make sure though that there is another parameter after the comma,
+                    // since trailing commas in parameter lists are not allowed
+                    if let Some((Ok(Token::CloseParenthesis), interval)) = scanner.peek() {
+                        return Err(parser_error(
+                            interval.clone(),
+                            ParserErrorKind::ExpectedIdentifier {
+                                found: Token::CloseParenthesis,
+                            },
+                        ));
+                    }
+                }
+            }
+            None => return Err(Error::UnexpectedEndOfInput),
+        };
+    }
+
+    Ok(children)
+}
+
+fn parse_parameter(
+    scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
 ) -> Result<AstNode> {
-    todo!()
+    let (is_var, start_interval) = match scanner.peek() {
+        Some((Ok(Token::Var), interval)) => {
+            let interval = interval.clone();
+            scanner.next();
+            (true, interval)
+        }
+        Some((_, interval)) => (false, interval.clone()),
+        None => return Err(Error::UnexpectedEndOfInput),
+    };
+
+    let identifier = parse_identifier(scanner)?;
+    let type_name = parse_type(scanner)?;
+    let interval = start_interval.extend_clone(&type_name.interval);
+
+    Ok(AstNode {
+        children: vec![identifier, type_name],
+        kind: if is_var {
+            AstNodeKind::VarParameter
+        } else {
+            AstNodeKind::ValueParameter
+        },
+        interval,
+    })
 }
 
 fn parse_block(
