@@ -50,16 +50,13 @@ pub struct ParserError {
 #[allow(missing_docs)]
 pub enum ParserErrorKind {
     /// A token was found that was not expected at this point.
-    UnexpectedToken {
-        expected: Vec<Token>,
-        found: Option<Token>,
-    },
+    UnexpectedToken { expected: Vec<Token>, found: Token },
 
     /// Expected an identifier, but found something else.
-    ExpectedIdentifier { found: Option<Token> },
+    ExpectedIdentifier { found: Token },
 
     /// Expected a type identifier, but found a different identifier.
-    ExpectedTypeName { found: Option<Token> },
+    ExpectedTypeName { found: Token },
 }
 
 /// A convenience function for creating parser errors.
@@ -81,6 +78,9 @@ pub enum Error {
     InvalidUtf8Character {
         invalid: u32,
     },
+
+    /// More input was expected, but none was found.
+    UnexpectedEndOfInput,
 }
 
 impl From<ScannerError> for Error {

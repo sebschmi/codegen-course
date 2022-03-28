@@ -90,37 +90,29 @@ pub struct Scanner<CharacterIterator> {
     line: usize,
     /// The column the current character is at.
     column: usize,
-
-    /// The next value of the iteration, to allow for peekable iteration.
-    next: Option<Result<Token>>,
-    /// If `next` is not `None`, then this stores the line before next was computed.
-    previous_line: Option<usize>,
-    /// If `next` is not `None`, then this stores the column before next was computed.
-    previous_column: Option<usize>,
 }
 
 impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator> {
     /// Create and initialise a new scanner over the given input.
-    /// The scanner moves to the first token right away.
+    /// The scanner is initialised with the first two characters of the given input.
     pub fn new(input: CharacterIterator) -> Result<Self> {
         let mut result = Self {
             input,
             current: None,
             lookahead: None,
+
             line: 1,
             column: 1,
-            next: None,
-            previous_line: None,
-            previous_column: None,
         };
         result.advance()?;
         result.advance()?;
-        result.skip_comments_and_whitespace()?;
+        result.line = 1;
+        result.column = 1;
         Ok(result)
     }
 
     /// Advances the position in the input by a single character.
-    fn advance(&mut self) -> Result<()> {
+    fn advance(&mut self) -> Result<ScanInterval> {
         if self.current == Some('\n') {
             self.line += 1;
             self.column = 1;
@@ -134,25 +126,30 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
             Some(Ok(character)) => Some(character),
             Some(Err(error)) => return Err(error),
         };
-        Ok(())
+        Ok(self.current_interval())
     }
 
     /// Advances until the current character is `None` or not a whitespace character.
-    fn skip_whitespace(&mut self) -> Result<()> {
+    fn skip_whitespace(&mut self) -> Result<ScanInterval> {
+        let mut interval = self.current_interval();
         while let Some(current) = self.current {
             if current.is_whitespace() {
+                interval = interval.extend_clone(&self.current_interval());
                 self.advance()?;
             } else {
                 break;
             }
         }
-        Ok(())
+        Ok(interval)
     }
 
     /// Advances until the current character is `None` or not a whitespace character, and additionally not inside a comment.
-    fn skip_comments_and_whitespace(&mut self) -> Result<()> {
+    fn skip_comments_and_whitespace(&mut self) -> Result<ScanInterval> {
+        let mut interval = self.current_interval();
         loop {
-            self.skip_whitespace()?;
+            // skip whitespace between comments
+            interval = interval.extend_clone(&self.skip_whitespace()?);
+
             if let (Some('{'), Some('*')) = (self.current, self.lookahead) {
                 // advance twice before first check to not accept {*} as valid comment
                 self.advance()?;
@@ -176,10 +173,8 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
 
                     // if we found no end of the comment, we continue searching
                 }
-
-                self.skip_whitespace()?;
             } else {
-                return Ok(());
+                return Ok(interval);
             }
         }
     }
@@ -344,56 +339,25 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
         })
     }
 
-    /// Return the next token along with the interval it spans in the source code.
-    pub fn next_with_interval(&mut self) -> Option<(Result<Token>, ScanInterval)> {
-        let start_line = self.previous_line.unwrap_or(self.line);
-        let start_column = self.previous_column.unwrap_or(self.column);
-        let token = self.next();
-        let end_line = self.previous_line.unwrap_or(self.line);
-        let end_column = self.previous_column.unwrap_or(self.column);
-        let interval = ScanInterval {
-            start_line,
-            start_column,
-            end_line,
-            end_column,
-        };
-
-        token.map(|token| (token, interval))
-    }
-
-    /// Peek at the next token along with the interval it spans in the source code, without advancing the iterator.
-    pub fn peek_with_interval(&mut self) -> Option<(&Result<Token>, ScanInterval)> {
-        self.peek();
-        // due to limits in Rust's lifetime model,
-        // we need to drop the mutable borrow to self here by ignoring the return value of self.peek(),
-        // and reborrow self as immutable
-        if let Some(next) = &self.next {
-            // position before the peeked token
-            let mut interval = self.current_interval();
-            interval.end_line = self.line;
-            interval.end_column = self.column;
-            Some((next, interval))
-        } else {
-            None
-        }
-    }
-
     /// Returns the current character as [ScanInterval].
-    /// This is the current character of the iteration, meaning that this does not change if [peek](Self::peek) is used.
+    /// This is the first character after the last returned token, or the first character of the input directly after construction.
     pub fn current_interval(&self) -> ScanInterval {
-        ScanInterval::single(
-            self.previous_line.unwrap_or(self.line),
-            self.previous_column.unwrap_or(self.column),
-        )
+        ScanInterval::single(self.line, self.column)
     }
+}
 
-    fn compute_next(&mut self) -> Option<Result<Token>> {
+impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<CharacterIterator> {
+    type Item = (Result<Token>, ScanInterval);
+
+    fn next(&mut self) -> Option<Self::Item> {
         if let Err(error) = self.skip_comments_and_whitespace() {
-            return Some(Err(error));
+            return Some((Err(error), self.current_interval()));
         }
 
         if let Some(current) = self.current {
-            let result = Some(Ok(match current {
+            let interval = self.current_interval();
+
+            let token = match current {
                 // Punctuation
                 ';' => Token::Semicolon,
                 '|' => Token::Pipe,
@@ -402,7 +366,7 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
                 ':' => {
                     if self.lookahead == Some('=') {
                         if let Err(error) = self.advance() {
-                            return Some(Err(error));
+                            return Some((Err(error), interval));
                         }
                         Token::AssignOperator
                     } else {
@@ -423,12 +387,12 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
                 '<' => {
                     if self.lookahead == Some('>') {
                         if let Err(error) = self.advance() {
-                            return Some(Err(error));
+                            return Some((Err(error), interval));
                         }
                         Token::NeqOperator
                     } else if self.lookahead == Some('=') {
                         if let Err(error) = self.advance() {
-                            return Some(Err(error));
+                            return Some((Err(error), interval));
                         }
                         Token::LeqOperator
                     } else {
@@ -438,7 +402,7 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
                 '>' => {
                     if self.lookahead == Some('=') {
                         if let Err(error) = self.advance() {
-                            return Some(Err(error));
+                            return Some((Err(error), interval));
                         }
                         Token::GeqOperator
                     } else {
@@ -456,60 +420,39 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
                         // integer or real literal
                         match self.parse_integer_or_real_literal() {
                             Ok(token) => token,
-                            error => return Some(error),
+                            Err(error) => return Some((Err(error), interval)),
                         }
                     } else if other == '"' {
                         match self.parse_string_literal() {
                             Ok(token) => token,
-                            error => return Some(error),
+                            Err(error) => return Some((Err(error), interval)),
                         }
                     } else if other.is_alphabetic() {
                         match self.parse_keyword_or_identifier_or_predefined_identifier_token() {
                             Ok(token) => token,
-                            error => return Some(error),
+                            Err(error) => return Some((Err(error), interval)),
                         }
                     } else {
-                        return Some(Err(scanner_error(
-                            ScanInterval::single(self.line, self.column),
-                            ScannerErrorKind::NotTheStartOfAToken,
-                        )));
+                        return Some((
+                            Err(scanner_error(
+                                ScanInterval::single(self.line, self.column),
+                                ScannerErrorKind::NotTheStartOfAToken,
+                            )),
+                            interval,
+                        ));
                     }
                 }
-            }));
+            };
 
+            let interval = interval.extend_clone(&self.current_interval());
             // advance if a token was successfully detected
             if let Err(error) = self.advance() {
-                return Some(Err(error));
+                return Some((Err(error), self.current_interval()));
             }
-            result
+            Some((Ok(token), interval))
         } else {
             // If there are no characters left, we are done.
             None
-        }
-    }
-
-    /// Returns the current head of the iterator, without advancing it.
-    pub fn peek(&mut self) -> Option<&Result<Token>> {
-        if self.next.is_none() {
-            self.previous_line = Some(self.line);
-            self.previous_column = Some(self.column);
-            self.next = self.compute_next();
-        }
-
-        self.next.as_ref()
-    }
-}
-
-impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<CharacterIterator> {
-    type Item = Result<Token>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(next) = self.next.take() {
-            self.previous_line = None;
-            self.previous_column = None;
-            Some(next)
-        } else {
-            self.compute_next()
         }
     }
 }
@@ -519,11 +462,11 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<Char
 pub struct ScanInterval {
     /// The line this node starts in.
     start_line: usize,
-    /// The line this node ends in.
+    /// The line this node ends in, inclusive.
     end_line: usize,
     /// The column this node starts in.
     start_column: usize,
-    /// The column this node ends in.
+    /// The column this node ends in, exclusive.
     end_column: usize,
 }
 
@@ -575,7 +518,7 @@ mod tests {
     fn test_large_program() {
         let program = "program na_5_Rr4_; functionand and function Boolean boolean true False false and procedure ( ) )()(%54/  | }]{[}\n\n\tab.size+size+.-*/-4+4(+4)5.5,643-5.4e+3 \" \\\" \\\\ £$€@\"(abc)0.1e-3+  \n\t";
         let scanner = Scanner::new(program.chars().map(Ok)).unwrap();
-        let tokens: Vec<_> = scanner.map(|token| token.unwrap()).collect();
+        let tokens: Vec<_> = scanner.map(|token| token.0.unwrap()).collect();
         use Token::*;
         assert_eq!(
             tokens,
