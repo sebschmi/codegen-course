@@ -1,6 +1,9 @@
 //! A (cross-)compiler for the Mini-PL language.
 #![warn(missing_docs)]
 
+// This makes the code less uniform, as the first push to a vector is then written differently than all others
+#![allow(clippy::vec_init_then_push)]
+
 use crate::error::{Error, Result};
 use crate::io::ReadIterator;
 use crate::parser::build_ast;

@@ -52,6 +52,7 @@ pub enum Token {
     Array,
     Of,
     Return,
+    Assert,
 
     // Literals
     // we simply forward literals to the C program and do not bother about parsing them here
@@ -323,6 +324,7 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
             "or" => Token::OrOperator,
             "and" => Token::AndOperator,
             "not" => Token::NotOperator,
+            "assert" => Token::Assert,
 
             // Identifiers
             // we transform everything to lower case, since identifiers are case-insensitive
