@@ -91,6 +91,9 @@ pub enum AstNodeKind {
     /// A logical and operator.
     AndOperator,
 
+    /// A dot operator.
+    DotOperator,
+
     /// A literal representing a constant value.
     Literal {
         literal_type: TypeName,
@@ -513,7 +516,7 @@ fn parse_arguments(
                     expect_token(scanner, Token::Comma)?;
                 }
             }
-            Some((Err(error), _)) => return Err(scanner.next().unwrap().0.unwrap_err()),
+            Some((Err(_), _)) => return Err(scanner.next().unwrap().0.unwrap_err()),
             None => return Err(Error::UnexpectedEndOfInput),
         }
     }
@@ -534,7 +537,7 @@ fn parse_type(
                     let result = vec![parse_expression(scanner)?];
                     result
                 }
-                Some((Err(error), _)) => {
+                Some((Err(_), _)) => {
                     return Err(scanner
                         .next()
                         .expect("peek() returned Some, so next() must also return Some")
@@ -791,7 +794,82 @@ fn parse_term(
 fn parse_factor(
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
 ) -> Result<AstNode> {
-    todo!()
+    let factor = match scanner.peek() {
+        Some((Ok(Token::Identifier { .. } | Token::PredefinedIdentifier { .. }), interval)) => {
+            let interval = interval.clone();
+            let mut identifier = parse_identifier_usage(scanner)?;
+
+            if let Some((Ok(Token::OpenParenthesis), _)) = scanner.peek() {
+                expect_token(scanner, Token::OpenParenthesis)?;
+                let mut children = vec![identifier];
+                children.extend(parse_arguments(scanner)?);
+                let interval = interval.extend_clone(&children.last().unwrap().interval);
+                AstNode {
+                    children,
+                    kind: AstNodeKind::CallStatement,
+                    interval,
+                }
+            } else {
+                parse_variable(scanner, &mut identifier)?;
+                identifier
+            }
+        }
+        Some((
+            Ok(Token::IntegerLiteral(_) | Token::RealLiteral(_) | Token::StringLiteral(_)),
+            _,
+        )) => {
+            let (token, interval) = scanner.next().unwrap();
+            let (value, primitive_type) = match token.unwrap() {
+                Token::IntegerLiteral(value) => (value, PrimitiveTypeName::Integer),
+                Token::RealLiteral(value) => (value, PrimitiveTypeName::Real),
+                Token::StringLiteral(value) => (value, PrimitiveTypeName::String),
+                token => unreachable!("{token:?}"),
+            };
+            AstNode {
+                children: Vec::new(),
+                kind: AstNodeKind::Literal {
+                    literal_type: TypeName::Primitive { primitive_type },
+                    value,
+                },
+                interval,
+            }
+        }
+        Some((Ok(Token::OpenParenthesis), _)) => {
+            expect_token(scanner, Token::OpenParenthesis)?;
+            let result = parse_expression(scanner)?;
+            expect_token(scanner, Token::CloseParenthesis)?;
+            result
+        }
+        Some((Ok(Token::NotOperator), _)) => {
+            let interval = expect_token(scanner, Token::NotOperator)?;
+            let mut result = parse_factor(scanner)?;
+            result.interval = result.interval.extend_clone(&interval);
+            result
+        }
+        Some((Ok(_), _)) => {
+            let (other, interval) = scanner.next().unwrap();
+            let other = other.unwrap();
+            return Err(parser_error(
+                interval,
+                ParserErrorKind::ExpectedFactor { found: other },
+            ));
+        }
+        Some((Err(_), _)) => return Err(scanner.next().unwrap().0.unwrap_err()),
+        None => return Err(Error::UnexpectedEndOfInput),
+    };
+
+    Ok(if let Some((Ok(Token::Dot), _)) = scanner.peek() {
+        expect_token(scanner, Token::Dot)?;
+        let identifier = parse_identifier_usage(scanner)?;
+        let interval = factor.interval.extend_clone(&identifier.interval);
+        AstNode {
+            children: vec![factor, identifier],
+            kind: AstNodeKind::DotOperator,
+            interval,
+        }
+    } else {
+        factor
+    })
 }
 
 /// Parses an identifier or predefined identifier into an identifier.
@@ -882,7 +960,8 @@ fn parse_variable(
     if let Some((Ok(Token::OpenBracket), _)) = scanner.peek() {
         expect_token(scanner, Token::OpenBracket)?;
         let index_term = parse_term(scanner)?;
-        expect_token(scanner, Token::CloseBracket)?;
+        let end_interval = expect_token(scanner, Token::CloseBracket)?;
+        identifier.interval = identifier.interval.extend_clone(&end_interval);
         identifier.children.push(index_term);
     }
     Ok(())
@@ -904,34 +983,6 @@ fn expect_token(
                         interval,
                         ParserErrorKind::UnexpectedToken {
                             expected: vec![expected],
-                            found: token,
-                        },
-                    ))
-                }
-            }
-            Err(error) => Err(error),
-        }
-    } else {
-        Err(Error::UnexpectedEndOfInput)
-    }
-}
-
-/// Expect the next token to be in the given vector.
-/// Note that this should only be used for tokens without attached data.
-fn expect_tokens(
-    scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
-    expected: Vec<Token>,
-) -> Result<ScanInterval> {
-    if let Some((token, interval)) = scanner.next() {
-        match token {
-            Ok(token) => {
-                if expected.contains(&token) {
-                    Ok(interval)
-                } else {
-                    Err(parser_error(
-                        interval,
-                        ParserErrorKind::UnexpectedToken {
-                            expected,
                             found: token,
                         },
                     ))

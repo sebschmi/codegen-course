@@ -57,6 +57,9 @@ pub enum ParserErrorKind {
 
     /// Expected a type identifier, but found a different identifier.
     ExpectedTypeName { found: Token },
+
+    /// Expected a factor, i.e. an identifier, predefined identifier, literal, parenthesis expression or not operator.
+    ExpectedFactor { found: Token },
 }
 
 /// A convenience function for creating parser errors.
