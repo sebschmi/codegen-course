@@ -327,17 +327,21 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Scanner<CharacterIterator
             "assert" => Token::Assert,
 
             // Identifiers
-            // we transform everything to lower case, since identifiers are case-insensitive
-            // Boolean has an uppercase B as specified
-            "true" | "false" | "Boolean" | "integer" | "real" | "string" | "read" | "writeln"
-            | "size" => Token::PredefinedIdentifier {
-                lower_case: literal.to_ascii_lowercase(),
-                original: literal.to_owned(),
-            },
-            _ => Token::Identifier {
-                lower_case: literal.to_ascii_lowercase(),
-                original: literal.to_owned(),
-            },
+            literal => {
+                // we transform everything to lower case, since identifiers and predefined identifiers are case-insensitive
+                let lower_case = literal.to_ascii_lowercase();
+                match lower_case.as_str() {
+                    "true" | "false" | "boolean" | "integer" | "real" | "string" | "read"
+                    | "writeln" | "size" => Token::PredefinedIdentifier {
+                        lower_case,
+                        original: literal.to_owned(),
+                    },
+                    _ => Token::Identifier {
+                        lower_case: literal.to_ascii_lowercase(),
+                        original: literal.to_owned(),
+                    },
+                }
+            }
         })
     }
 
