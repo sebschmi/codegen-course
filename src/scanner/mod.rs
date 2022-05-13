@@ -1,4 +1,5 @@
 use crate::error::{scanner_error, Result, ScannerErrorKind};
+use crate::ReadIterator;
 use std::cmp::Ordering;
 
 /// The set of tokens output by the scanner.

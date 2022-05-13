@@ -60,6 +60,9 @@ pub enum ParserErrorKind {
 
     /// Expected a factor, i.e. an identifier, predefined identifier, literal, parenthesis expression or not operator.
     ExpectedFactor { found: Token },
+
+    /// Found a block that contains no statements, which is forbidden.
+    EmptyBlock,
 }
 
 /// A convenience function for creating parser errors.

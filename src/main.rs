@@ -8,6 +8,8 @@ use crate::io::ReadIterator;
 use crate::parser::build_ast;
 use crate::scanner::Scanner;
 use clap::Parser;
+use log::{info, LevelFilter};
+use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
@@ -29,7 +31,24 @@ struct Configuration {
     input: PathBuf,
 }
 
+fn initialise_logging() {
+    CombinedLogger::init(vec![TermLogger::new(
+        if cfg!(debug_assertions) {
+            LevelFilter::Trace
+        } else {
+            LevelFilter::Info
+        },
+        Config::default(),
+        TerminalMode::Mixed,
+        ColorChoice::Auto,
+    )])
+    .unwrap();
+
+    info!("Logging initialised successfully");
+}
+
 fn main() -> Result<()> {
+    initialise_logging();
     let configuration = Configuration::parse();
 
     let input = BufReader::new(File::open(&configuration.input).map_err(Error::ReadError)?);
