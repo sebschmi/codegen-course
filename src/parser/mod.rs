@@ -144,7 +144,7 @@ fn parse_program(
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
 ) -> Result<AstNode> {
     let start_interval = expect_token(scanner, Token::Program)?;
-    let mut children = vec![parse_identifier(scanner)?];
+    let mut children = vec![parse_identifier_declaration(scanner)?];
     expect_token(scanner, Token::Semicolon)?;
 
     let main_interval;
@@ -185,7 +185,7 @@ fn parse_procedure(
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
     start_interval: ScanInterval,
 ) -> Result<AstNode> {
-    let mut children = vec![parse_identifier(scanner)?];
+    let mut children = vec![parse_identifier_declaration(scanner)?];
     expect_token(scanner, Token::OpenParenthesis)?;
     children.extend(parse_parameters(scanner)?);
     expect_token(scanner, Token::CloseParenthesis)?;
@@ -206,7 +206,7 @@ fn parse_function(
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
     start_interval: ScanInterval,
 ) -> Result<AstNode> {
-    let mut children = vec![parse_identifier(scanner)?];
+    let mut children = vec![parse_identifier_declaration(scanner)?];
     expect_token(scanner, Token::OpenParenthesis)?;
     children.extend(parse_parameters(scanner)?);
     expect_token(scanner, Token::CloseParenthesis)?;
@@ -272,7 +272,7 @@ fn parse_parameter(
         None => return Err(Error::UnexpectedEndOfInput),
     };
 
-    let identifier = parse_identifier(scanner)?;
+    let identifier = parse_identifier_declaration(scanner)?;
     let type_name = parse_type(scanner)?;
     let interval = start_interval.extend_clone(&type_name.interval);
 
@@ -311,6 +311,34 @@ fn parse_block(
         children,
         kind: AstNodeKind::Block,
         interval: block_interval,
+    })
+}
+
+fn parse_statement(
+    scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
+) -> Result<AstNode> {
+    Ok(match scanner.next() {
+        Some((Ok(Token::Begin), interval)) => parse_block(scanner, interval)?,
+        Some((Ok(Token::If), interval)) => parse_if(scanner, interval)?,
+        Some((Ok(Token::While), interval)) => parse_while(scanner, interval)?,
+        Some((Ok(Token::Var), interval)) => parse_var(scanner, interval)?,
+        Some((Ok(Token::Return), interval)) => parse_return(scanner, interval)?,
+        Some((Ok(Token::Assert), interval)) => parse_assert(scanner, interval)?,
+        Some((
+            Ok(identifier @ (Token::Identifier { .. } | Token::PredefinedIdentifier { .. })),
+            interval,
+        )) => parse_cass(identifier, scanner, interval)?,
+        Some((Ok(other), interval)) => {
+            return Err(parser_error(
+                interval,
+                ParserErrorKind::UnexpectedToken {
+                    expected: vec![Token::Procedure, Token::Function, Token::Begin],
+                    found: other,
+                },
+            ))
+        }
+        Some((Err(error), _)) => return Err(error),
+        None => return Err(Error::UnexpectedEndOfInput),
     })
 }
 
@@ -358,11 +386,11 @@ fn parse_var(
     start_interval: ScanInterval,
 ) -> Result<AstNode> {
     let mut children = Vec::new();
-    children.push(parse_identifier(scanner)?);
+    children.push(parse_identifier_declaration(scanner)?);
 
     while let Some((Ok(Token::Comma), _)) = scanner.peek() {
         expect_token(scanner, Token::Comma)?;
-        children.push(parse_identifier(scanner)?);
+        children.push(parse_identifier_declaration(scanner)?);
     }
 
     expect_token(scanner, Token::Colon)?;
@@ -413,7 +441,7 @@ fn parse_assert(
     })
 }
 
-/// Panics if called with `identifier != Token::Identifier`.
+/// Panics if called with `identifier` not being `Token::Identifier` or `Token::PredefinedIdentifier`.
 fn parse_cass(
     identifier: Token,
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
@@ -426,8 +454,20 @@ fn parse_cass(
     {
         vec![AstNode::leaf(
             AstNodeKind::Identifier {
-                original: "".to_string(),
-                lower_case: "".to_string(),
+                original,
+                lower_case,
+            },
+            start_interval.clone(),
+        )]
+    } else if let Token::PredefinedIdentifier {
+        original,
+        lower_case,
+    } = identifier
+    {
+        vec![AstNode::leaf(
+            AstNodeKind::PredefinedIdentifier {
+                original,
+                lower_case,
             },
             start_interval.clone(),
         )]
@@ -440,7 +480,7 @@ fn parse_cass(
         children.extend(parse_arguments(scanner)?);
         AstNodeKind::CallStatement
     } else {
-        children.push(parse_identifier(scanner)?);
+        parse_variable(scanner, &mut children[0])?;
         expect_token(scanner, Token::AssignOperator)?;
         children.push(parse_expression(scanner)?);
         AstNodeKind::AssignmentStatement
@@ -451,47 +491,6 @@ fn parse_cass(
         children,
         kind: ast_node_kind,
         interval,
-    })
-}
-
-fn parse_statement(
-    scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
-) -> Result<AstNode> {
-    Ok(match scanner.next() {
-        Some((Ok(Token::Begin), interval)) => parse_block(scanner, interval)?,
-        Some((Ok(Token::If), interval)) => parse_if(scanner, interval)?,
-        Some((Ok(Token::While), interval)) => parse_while(scanner, interval)?,
-        Some((Ok(Token::Var), interval)) => parse_var(scanner, interval)?,
-        Some((Ok(Token::Return), interval)) => parse_return(scanner, interval)?,
-        Some((Ok(Token::Assert), interval)) => parse_assert(scanner, interval)?,
-        Some((
-            Ok(Token::PredefinedIdentifier {
-                lower_case,
-                original,
-            }),
-            interval,
-        )) => parse_cass(
-            Token::Identifier {
-                lower_case,
-                original,
-            },
-            scanner,
-            interval,
-        )?,
-        Some((Ok(identifier @ Token::Identifier { .. }), interval)) => {
-            parse_cass(identifier, scanner, interval)?
-        }
-        Some((Ok(other), interval)) => {
-            return Err(parser_error(
-                interval,
-                ParserErrorKind::UnexpectedToken {
-                    expected: vec![Token::Procedure, Token::Function, Token::Begin],
-                    found: other,
-                },
-            ))
-        }
-        Some((Err(error), _)) => return Err(error),
-        None => return Err(Error::UnexpectedEndOfInput),
     })
 }
 
@@ -796,7 +795,7 @@ fn parse_factor(
 }
 
 /// Parses an identifier or predefined identifier into an identifier.
-fn parse_identifier(
+fn parse_identifier_declaration(
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
 ) -> Result<AstNode> {
     match scanner.next() {
@@ -833,6 +832,60 @@ fn parse_identifier(
         Some((Err(error), _)) => Err(error),
         None => Err(Error::UnexpectedEndOfInput),
     }
+}
+
+/// Parses an identifier or predefined identifier into an identifier or predefined identifier.
+fn parse_identifier_usage(
+    scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
+) -> Result<AstNode> {
+    match scanner.next() {
+        Some((
+            Ok(Token::Identifier {
+                original,
+                lower_case,
+            }),
+            interval,
+        )) => Ok(AstNode::leaf(
+            AstNodeKind::Identifier {
+                original,
+                lower_case,
+            },
+            interval,
+        )),
+        Some((
+            Ok(Token::PredefinedIdentifier {
+                original,
+                lower_case,
+            }),
+            interval,
+        )) => Ok(AstNode::leaf(
+            AstNodeKind::PredefinedIdentifier {
+                original,
+                lower_case,
+            },
+            interval,
+        )),
+        Some((Ok(other), interval)) => Err(parser_error(
+            interval,
+            ParserErrorKind::ExpectedIdentifier { found: other },
+        )),
+        Some((Err(error), _)) => Err(error),
+        None => Err(Error::UnexpectedEndOfInput),
+    }
+}
+
+/// Parse the array part of a variable expression and append it to the children of the given identifier.
+fn parse_variable(
+    scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
+    identifier: &mut AstNode,
+) -> Result<()> {
+    if let Some((Ok(Token::OpenBracket), _)) = scanner.peek() {
+        expect_token(scanner, Token::OpenBracket)?;
+        let index_term = parse_term(scanner)?;
+        expect_token(scanner, Token::CloseBracket)?;
+        identifier.children.push(index_term);
+    }
+    Ok(())
 }
 
 /// Expect the next token to be the given token.

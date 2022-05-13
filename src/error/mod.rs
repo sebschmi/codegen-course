@@ -52,7 +52,7 @@ pub enum ParserErrorKind {
     /// A token was found that was not expected at this point.
     UnexpectedToken { expected: Vec<Token>, found: Token },
 
-    /// Expected an identifier, but found something else.
+    /// Expected an identifier or predefined identifier, but found something else.
     ExpectedIdentifier { found: Token },
 
     /// Expected a type identifier, but found a different identifier.
