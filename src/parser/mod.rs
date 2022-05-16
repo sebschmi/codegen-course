@@ -1,6 +1,5 @@
 use crate::error::Result;
 use crate::error::{parser_error, ParserErrorKind};
-use crate::scanner::Token::CloseParenthesis;
 use crate::scanner::{ScanInterval, Scanner, Token};
 use crate::Error;
 use log::trace;
@@ -11,7 +10,7 @@ use std::iter::Peekable;
 mod tests;
 
 /// A node of the abstract syntax tree.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct AstNode {
     /// The children of the node.
     /// A valid number of children is decided by the kind of the node.
@@ -27,7 +26,7 @@ pub struct AstNode {
 /// The kind of an AST node.
 /// This can be an operator, function, etc.
 #[allow(missing_docs)]
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum AstNodeKind {
     /// The root node.
     Program,
@@ -251,7 +250,6 @@ fn parse_parameters(
     loop {
         match scanner.peek() {
             Some((Ok(Token::CloseParenthesis), _)) => {
-                expect_token(scanner, CloseParenthesis)?;
                 break;
             }
             Some(_) => {
@@ -292,6 +290,7 @@ fn parse_parameter(
     };
 
     let identifier = parse_identifier_declaration(scanner)?;
+    expect_token(scanner, Token::Colon)?;
     let type_name = parse_type(scanner)?;
     let interval = start_interval.extend_clone(&type_name.interval);
 
@@ -384,7 +383,7 @@ fn parse_if(
     children.push(parse_statement(scanner)?);
 
     if let Ok(Some(_)) = optional_token(scanner, Token::Else) {
-        children.push(parse_expression(scanner)?);
+        children.push(parse_statement(scanner)?);
     }
 
     let interval = start_interval.extend_clone(&children.last().unwrap().interval);
@@ -403,7 +402,7 @@ fn parse_while(
 
     let mut children = Vec::new();
     children.push(parse_expression(scanner)?);
-    expect_token(scanner, Token::Then)?;
+    expect_token(scanner, Token::Do)?;
     children.push(parse_statement(scanner)?);
 
     let interval = start_interval.extend_clone(&children.last().unwrap().interval);
@@ -703,6 +702,7 @@ fn parse_expression(
                     Token::GeqOperator => AstNodeKind::GeqOperator,
                     token => unreachable!("{token:?}"),
                 };
+                scanner.next().unwrap().0?;
                 let children = vec![first, parse_simple_expression(scanner)?];
                 let interval = interval.extend_clone(&children.last().unwrap().interval);
 
@@ -814,6 +814,7 @@ fn parse_term(
                     Token::AndOperator => AstNodeKind::AndOperator,
                     token => unreachable!("{token:?}"),
                 };
+                scanner.next();
 
                 let factor = parse_factor(scanner)?;
                 let interval = interval.extend_clone(&factor.interval);
@@ -1056,7 +1057,7 @@ fn optional_token(
     scanner: &mut Peekable<Scanner<impl Iterator<Item = Result<char>>>>,
     expected: Token,
 ) -> Result<Option<ScanInterval>> {
-    trace!("expect_token {:?}", scanner.peek());
+    trace!("optional_token {:?}", scanner.peek());
 
     if let Some((token, _)) = scanner.peek() {
         match token {

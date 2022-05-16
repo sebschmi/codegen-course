@@ -13,6 +13,7 @@ use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU8, Ordering};
 
 /// The error types used by the compiler.
 pub mod error;
@@ -31,20 +32,36 @@ struct Configuration {
     input: PathBuf,
 }
 
+// Make sure that logging gets initialised only once in tests
+static LOGGING_INITIALISED: AtomicU8 = AtomicU8::new(0);
+
 fn initialise_logging() {
-    CombinedLogger::init(vec![TermLogger::new(
-        if cfg!(debug_assertions) {
+    if LOGGING_INITIALISED
+        .compare_exchange(0, 1, Ordering::SeqCst, Ordering::SeqCst)
+        .is_ok()
+    {
+        let log_level = if cfg!(debug_assertions) {
             LevelFilter::Trace
         } else {
             LevelFilter::Info
-        },
-        Config::default(),
-        TerminalMode::Mixed,
-        ColorChoice::Auto,
-    )])
-    .unwrap();
+        };
+        CombinedLogger::init(vec![TermLogger::new(
+            log_level,
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        )])
+        .unwrap();
 
-    info!("Logging initialised successfully");
+        info!("Logging initialised successfully to {log_level}");
+        LOGGING_INITIALISED
+            .compare_exchange(1, 2, Ordering::SeqCst, Ordering::SeqCst)
+            .unwrap();
+    }
+
+    while LOGGING_INITIALISED.load(Ordering::SeqCst) != 2 {
+        // busy wait for logging to be initialised
+    }
 }
 
 fn main() -> Result<()> {

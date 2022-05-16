@@ -1,5 +1,4 @@
 use crate::error::{scanner_error, Result, ScannerErrorKind};
-use crate::ReadIterator;
 use std::cmp::Ordering;
 
 /// The set of tokens output by the scanner.
@@ -468,13 +467,13 @@ impl<CharacterIterator: Iterator<Item = Result<char>>> Iterator for Scanner<Char
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScanInterval {
     /// The line this node starts in.
-    start_line: usize,
+    pub start_line: usize,
     /// The line this node ends in, inclusive.
-    end_line: usize,
+    pub end_line: usize,
     /// The column this node starts in.
-    start_column: usize,
+    pub start_column: usize,
     /// The column this node ends in, exclusive.
-    end_column: usize,
+    pub end_column: usize,
 }
 
 impl ScanInterval {
@@ -546,7 +545,7 @@ mod tests {
                     lower_case: "boolean".to_string(),
                     original: "Boolean".to_string()
                 },
-                Identifier {
+                PredefinedIdentifier {
                     lower_case: "boolean".to_string(),
                     original: "boolean".to_string()
                 },
@@ -554,7 +553,7 @@ mod tests {
                     lower_case: "true".to_string(),
                     original: "true".to_string()
                 },
-                Identifier {
+                PredefinedIdentifier {
                     lower_case: "false".to_string(),
                     original: "False".to_string()
                 },
