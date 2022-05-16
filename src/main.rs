@@ -7,6 +7,7 @@ use crate::error::{Error, Result};
 use crate::io::ReadIterator;
 use crate::parser::build_ast;
 use crate::scanner::Scanner;
+use crate::symbol_table::{build_symbol_table, SymbolTable};
 use clap::Parser;
 use log::{info, LevelFilter};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
@@ -23,6 +24,10 @@ pub mod io;
 pub mod parser;
 /// Converts the input text into tokens.
 pub mod scanner;
+/// Static checks performed on the AST.
+pub mod static_ast_checks;
+/// The symbol table extracted from the AST.
+pub mod symbol_table;
 
 /// The command line arguments used for configuring the compiler.
 #[derive(Parser)]
@@ -70,7 +75,9 @@ fn main() -> Result<()> {
 
     let input = BufReader::new(File::open(&configuration.input).map_err(Error::ReadError)?);
     let scanner = Scanner::new(ReadIterator::new(input))?;
-    let ast = build_ast(scanner)?;
+    let mut ast = build_ast(scanner)?;
+    let mut symbol_table = SymbolTable::new();
+    build_symbol_table(&mut ast, &mut symbol_table)?;
 
     println!("{ast:#?}");
 

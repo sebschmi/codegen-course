@@ -37,6 +37,7 @@ end.
                 AstNode {
                     children: vec![],
                     kind: AstNodeKind::Identifier {
+                        symbol_index: 0,
                         original: "gcd".to_string(),
                         lower_case: "gcd".to_string(),
                     },
@@ -54,6 +55,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n1".to_string(),
                                         lower_case: "n1".to_string(),
                                     },
@@ -67,6 +69,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n2".to_string(),
                                         lower_case: "n2".to_string(),
                                     },
@@ -105,6 +108,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
                                     },
@@ -118,6 +122,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n1".to_string(),
                                         lower_case: "n1".to_string(),
                                     },
@@ -142,6 +147,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
                                     },
@@ -155,6 +161,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n2".to_string(),
                                         lower_case: "n2".to_string(),
                                     },
@@ -181,6 +188,7 @@ end.
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "n2".to_string(),
                                                 lower_case: "n2".to_string(),
                                             },
@@ -194,6 +202,7 @@ end.
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "n1".to_string(),
                                                 lower_case: "n1".to_string(),
                                             },
@@ -220,6 +229,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "tmp".to_string(),
                                                         lower_case: "tmp".to_string(),
                                                     },
@@ -259,6 +269,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "tmp".to_string(),
                                                         lower_case: "tmp".to_string(),
                                                     },
@@ -272,6 +283,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n1".to_string(),
                                                         lower_case: "n1".to_string(),
                                                     },
@@ -296,6 +308,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n1".to_string(),
                                                         lower_case: "n1".to_string(),
                                                     },
@@ -309,6 +322,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n2".to_string(),
                                                         lower_case: "n2".to_string(),
                                                     },
@@ -333,6 +347,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n2".to_string(),
                                                         lower_case: "n2".to_string(),
                                                     },
@@ -346,6 +361,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "tmp".to_string(),
                                                         lower_case: "tmp".to_string(),
                                                     },
@@ -390,6 +406,7 @@ end.
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "n2".to_string(),
                                                 lower_case: "n2".to_string(),
                                             },
@@ -431,6 +448,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "new".to_string(),
                                                         lower_case: "new".to_string(),
                                                     },
@@ -470,6 +488,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "new".to_string(),
                                                         lower_case: "new".to_string(),
                                                     },
@@ -485,6 +504,7 @@ end.
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n1".to_string(),
                                                                 lower_case: "n1".to_string(),
                                                             },
@@ -498,6 +518,7 @@ end.
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n2".to_string(),
                                                                 lower_case: "n2".to_string(),
                                                             },
@@ -531,6 +552,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n1".to_string(),
                                                         lower_case: "n1".to_string(),
                                                     },
@@ -544,6 +566,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n2".to_string(),
                                                         lower_case: "n2".to_string(),
                                                     },
@@ -568,6 +591,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n2".to_string(),
                                                         lower_case: "n2".to_string(),
                                                     },
@@ -581,6 +605,7 @@ end.
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "new".to_string(),
                                                         lower_case: "new".to_string(),
                                                     },
@@ -623,6 +648,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "writeln".to_string(),
                                         lower_case: "writeln".to_string(),
                                     },
@@ -636,6 +662,7 @@ end.
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n1".to_string(),
                                         lower_case: "n1".to_string(),
                                     },
@@ -723,6 +750,7 @@ end.";
                 AstNode {
                     children: vec![],
                     kind: AstNodeKind::Identifier {
+                        symbol_index: 0,
                         original: "gcd2".to_string(),
                         lower_case: "gcd2".to_string(),
                     },
@@ -738,6 +766,7 @@ end.";
                         AstNode {
                             children: vec![],
                             kind: AstNodeKind::Identifier {
+                                symbol_index: 0,
                                 original: "gcd".to_string(),
                                 lower_case: "gcd".to_string(),
                             },
@@ -753,6 +782,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n1".to_string(),
                                         lower_case: "n1".to_string(),
                                     },
@@ -791,6 +821,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n2".to_string(),
                                         lower_case: "n2".to_string(),
                                     },
@@ -847,6 +878,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n2".to_string(),
                                                         lower_case: "n2".to_string(),
                                                     },
@@ -860,6 +892,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n1".to_string(),
                                                         lower_case: "n1".to_string(),
                                                     },
@@ -886,6 +919,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "new".to_string(),
                                                                 lower_case: "new".to_string(),
                                                             },
@@ -925,6 +959,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "new".to_string(),
                                                                 lower_case: "new".to_string(),
                                                             },
@@ -940,6 +975,7 @@ end.";
                                                                 AstNode {
                                                                     children: vec![],
                                                                     kind: AstNodeKind::Identifier {
+                                                                        symbol_index: 0,
                                                                         original: "n2".to_string(),
                                                                         lower_case: "n2"
                                                                             .to_string(),
@@ -954,6 +990,7 @@ end.";
                                                                 AstNode {
                                                                     children: vec![],
                                                                     kind: AstNodeKind::Identifier {
+                                                                        symbol_index: 0,
                                                                         original: "n1".to_string(),
                                                                         lower_case: "n1"
                                                                             .to_string(),
@@ -988,6 +1025,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n2".to_string(),
                                                                 lower_case: "n2".to_string(),
                                                             },
@@ -1001,6 +1039,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "new".to_string(),
                                                                 lower_case: "new".to_string(),
                                                             },
@@ -1036,6 +1075,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "new".to_string(),
                                                                 lower_case: "new".to_string(),
                                                             },
@@ -1075,6 +1115,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "new".to_string(),
                                                                 lower_case: "new".to_string(),
                                                             },
@@ -1090,6 +1131,7 @@ end.";
                                                                 AstNode {
                                                                     children: vec![],
                                                                     kind: AstNodeKind::Identifier {
+                                                                        symbol_index: 0,
                                                                         original: "n1".to_string(),
                                                                         lower_case: "n1"
                                                                             .to_string(),
@@ -1104,6 +1146,7 @@ end.";
                                                                 AstNode {
                                                                     children: vec![],
                                                                     kind: AstNodeKind::Identifier {
+                                                                        symbol_index: 0,
                                                                         original: "n2".to_string(),
                                                                         lower_case: "n2"
                                                                             .to_string(),
@@ -1138,6 +1181,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n1".to_string(),
                                                                 lower_case: "n1".to_string(),
                                                             },
@@ -1151,6 +1195,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n2".to_string(),
                                                                 lower_case: "n2".to_string(),
                                                             },
@@ -1175,6 +1220,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n2".to_string(),
                                                                 lower_case: "n2".to_string(),
                                                             },
@@ -1188,6 +1234,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "new".to_string(),
                                                                 lower_case: "new".to_string(),
                                                             },
@@ -1232,6 +1279,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n2".to_string(),
                                                         lower_case: "n2".to_string(),
                                                     },
@@ -1274,6 +1322,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "gcd".to_string(),
                                                                 lower_case: "gcd".to_string(),
                                                             },
@@ -1287,6 +1336,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n1".to_string(),
                                                                 lower_case: "n1".to_string(),
                                                             },
@@ -1300,6 +1350,7 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Identifier {
+                                                                symbol_index: 0,
                                                                 original: "n2".to_string(),
                                                                 lower_case: "n2".to_string(),
                                                             },
@@ -1340,6 +1391,7 @@ end.";
                                                 children: vec![AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "n1".to_string(),
                                                         lower_case: "n1".to_string(),
                                                     },
@@ -1400,6 +1452,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n1".to_string(),
                                         lower_case: "n1".to_string(),
                                     },
@@ -1413,6 +1466,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n2".to_string(),
                                         lower_case: "n2".to_string(),
                                     },
@@ -1451,6 +1505,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
                                     },
@@ -1464,6 +1519,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n1".to_string(),
                                         lower_case: "n1".to_string(),
                                     },
@@ -1488,6 +1544,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
                                     },
@@ -1501,6 +1558,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "n2".to_string(),
                                         lower_case: "n2".to_string(),
                                     },
@@ -1525,6 +1583,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "writeln".to_string(),
                                         lower_case: "writeln".to_string(),
                                     },
@@ -1540,6 +1599,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "gcd".to_string(),
                                                 lower_case: "gcd".to_string(),
                                             },
@@ -1553,6 +1613,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "n1".to_string(),
                                                 lower_case: "n1".to_string(),
                                             },
@@ -1566,6 +1627,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "n2".to_string(),
                                                 lower_case: "n2".to_string(),
                                             },
@@ -1665,6 +1727,7 @@ end.";
                 AstNode {
                     children: vec![],
                     kind: AstNodeKind::Identifier {
+                        symbol_index: 0,
                         original: "gcd3".to_string(),
                         lower_case: "gcd3".to_string(),
                     },
@@ -1680,6 +1743,7 @@ end.";
                         AstNode {
                             children: vec![],
                             kind: AstNodeKind::Identifier {
+                                symbol_index: 0,
                                 original: "sort_pair_descending".to_string(),
                                 lower_case: "sort_pair_descending".to_string(),
                             },
@@ -1695,6 +1759,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
                                     },
@@ -1765,6 +1830,7 @@ end.";
                                                     },
                                                 },],
                                                 kind: AstNodeKind::Identifier {
+                                                    symbol_index: 0,
                                                     original: "pair".to_string(),
                                                     lower_case: "pair".to_string(),
                                                 },
@@ -1793,6 +1859,7 @@ end.";
                                                     },
                                                 },],
                                                 kind: AstNodeKind::Identifier {
+                                                    symbol_index: 0,
                                                     original: "pair".to_string(),
                                                     lower_case: "pair".to_string(),
                                                 },
@@ -1819,6 +1886,7 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "tmp".to_string(),
                                                             lower_case: "tmp".to_string(),
                                                         },
@@ -1858,6 +1926,7 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "tmp".to_string(),
                                                             lower_case: "tmp".to_string(),
                                                         },
@@ -1886,6 +1955,7 @@ end.";
                                                             },
                                                         },],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "pair".to_string(),
                                                             lower_case: "pair".to_string(),
                                                         },
@@ -1925,6 +1995,7 @@ end.";
                                                             },
                                                         },],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "pair".to_string(),
                                                             lower_case: "pair".to_string(),
                                                         },
@@ -1953,6 +2024,7 @@ end.";
                                                             },
                                                         },],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "pair".to_string(),
                                                             lower_case: "pair".to_string(),
                                                         },
@@ -1992,6 +2064,7 @@ end.";
                                                             },
                                                         },],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "pair".to_string(),
                                                             lower_case: "pair".to_string(),
                                                         },
@@ -2020,6 +2093,7 @@ end.";
                                                             },
                                                         },],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "pair".to_string(),
                                                             lower_case: "pair".to_string(),
                                                         },
@@ -2079,6 +2153,7 @@ end.";
                         AstNode {
                             children: vec![],
                             kind: AstNodeKind::Identifier {
+                                symbol_index: 0,
                                 original: "gcd".to_string(),
                                 lower_case: "gcd".to_string(),
                             },
@@ -2094,6 +2169,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
                                     },
@@ -2146,6 +2222,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "result".to_string(),
                                         lower_case: "result".to_string(),
                                     },
@@ -2186,6 +2263,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "sort_pair_descending".to_string(),
                                                 lower_case: "sort_pair_descending".to_string(),
                                             },
@@ -2199,6 +2277,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "pair".to_string(),
                                                 lower_case: "pair".to_string(),
                                             },
@@ -2223,6 +2302,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "new".to_string(),
                                                 lower_case: "new".to_string(),
                                             },
@@ -2261,6 +2341,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "new".to_string(),
                                                 lower_case: "new".to_string(),
                                             },
@@ -2291,6 +2372,7 @@ end.";
                                                         },
                                                     },],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "pair".to_string(),
                                                         lower_case: "pair".to_string(),
                                                     },
@@ -2319,6 +2401,7 @@ end.";
                                                         },
                                                     },],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "pair".to_string(),
                                                         lower_case: "pair".to_string(),
                                                     },
@@ -2366,6 +2449,7 @@ end.";
                                                 },
                                             },],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "pair".to_string(),
                                                 lower_case: "pair".to_string(),
                                             },
@@ -2393,6 +2477,7 @@ end.";
                                                 },
                                             },],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "pair".to_string(),
                                                 lower_case: "pair".to_string(),
                                             },
@@ -2431,6 +2516,7 @@ end.";
                                                 },
                                             },],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "pair".to_string(),
                                                 lower_case: "pair".to_string(),
                                             },
@@ -2444,6 +2530,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
+                                                symbol_index: 0,
                                                 original: "new".to_string(),
                                                 lower_case: "new".to_string(),
                                             },
@@ -2485,6 +2572,7 @@ end.";
                                                         },
                                                     },],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "pair".to_string(),
                                                         lower_case: "pair".to_string(),
                                                     },
@@ -2526,6 +2614,7 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "gcd".to_string(),
                                                             lower_case: "gcd".to_string(),
                                                         },
@@ -2539,6 +2628,7 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "pair".to_string(),
                                                             lower_case: "pair".to_string(),
                                                         },
@@ -2552,6 +2642,7 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
+                                                            symbol_index: 0,
                                                             original: "result".to_string(),
                                                             lower_case: "result".to_string(),
                                                         },
@@ -2584,6 +2675,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "result".to_string(),
                                                         lower_case: "result".to_string(),
                                                     },
@@ -2612,6 +2704,7 @@ end.";
                                                         },
                                                     },],
                                                     kind: AstNodeKind::Identifier {
+                                                        symbol_index: 0,
                                                         original: "pair".to_string(),
                                                         lower_case: "pair".to_string(),
                                                     },
@@ -2665,6 +2758,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
                                     },
@@ -2717,6 +2811,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
                                     },
@@ -2744,6 +2839,7 @@ end.";
                                         },
                                     },],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
                                     },
@@ -2768,6 +2864,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
                                     },
@@ -2795,6 +2892,7 @@ end.";
                                         },
                                     },],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
                                     },
@@ -2819,6 +2917,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
                                     },
@@ -2857,6 +2956,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
                                     },
@@ -2870,6 +2970,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
                                     },
@@ -2883,6 +2984,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
                                     },
@@ -2907,6 +3009,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
+                                        symbol_index: 0,
                                         original: "writeln".to_string(),
                                         lower_case: "writeln".to_string(),
                                     },
@@ -2920,6 +3023,7 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
+                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
                                     },

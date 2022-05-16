@@ -73,12 +73,39 @@ pub fn parser_error(interval: ScanInterval, kind: ParserErrorKind) -> Error {
     ParserError { kind, interval }.into()
 }
 
+/// The set of all errors that can occur during static analysis.
+#[derive(Debug)]
+pub struct StaticError {
+    /// The error kind.
+    kind: StaticErrorKind,
+
+    /// The coordinates of this error in the source code.
+    interval: ScanInterval,
+}
+
+/// The set of all error kinds that can occur during static analysis.
+#[derive(Debug)]
+#[allow(missing_docs)]
+pub enum StaticErrorKind {
+    /// A symbol was used that was not declared before.
+    UndeclaredSymbol {
+        lower_case: String,
+        original: String,
+    },
+}
+
+/// A convenience function for creating static errors.
+pub fn static_error(interval: ScanInterval, kind: StaticErrorKind) -> Error {
+    StaticError { kind, interval }.into()
+}
+
 /// The set of all errors that can occur in the compiler.
 #[derive(Debug)]
 #[allow(missing_docs)]
 pub enum Error {
     ScannerError(ScannerError),
     ParserError(ParserError),
+    StaticError(StaticError),
 
     /// An error when reading the input file.
     ReadError(std::io::Error),
@@ -101,5 +128,11 @@ impl From<ScannerError> for Error {
 impl From<ParserError> for Error {
     fn from(error: ParserError) -> Self {
         Self::ParserError(error)
+    }
+}
+
+impl From<StaticError> for Error {
+    fn from(error: StaticError) -> Self {
+        Self::StaticError(error)
     }
 }

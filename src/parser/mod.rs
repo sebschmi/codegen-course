@@ -107,12 +107,14 @@ pub enum AstNodeKind {
     Identifier {
         original: String,
         lower_case: String,
+        symbol_index: usize,
     },
     /// An identifier of a variable, function, procedure or program.
     /// This identifier is predefined and thus has special rules on its value.
     PredefinedIdentifier {
         original: String,
         lower_case: String,
+        symbol_index: usize,
     },
     /// The name of a type.
     Type { type_name: TypeName },
@@ -138,6 +140,71 @@ pub enum PrimitiveTypeName {
     Integer,
     Real,
     String,
+}
+
+impl AstNode {
+    pub fn children(&self) -> &[AstNode] {
+        &self.children
+    }
+
+    pub fn children_mut(&mut self) -> &mut [AstNode] {
+        &mut self.children
+    }
+
+    pub fn interval(&self) -> &ScanInterval {
+        &self.interval
+    }
+
+    pub fn kind(&self) -> &AstNodeKind {
+        &self.kind
+    }
+
+    pub fn get_identifier_lower_case(&self) -> Option<&str> {
+        if let AstNodeKind::Identifier { lower_case, .. }
+        | AstNodeKind::PredefinedIdentifier { lower_case, .. } = &self.kind
+        {
+            Some(lower_case)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_symbol_index_mut(&mut self) -> Option<&mut usize> {
+        if let AstNodeKind::Identifier { symbol_index, .. }
+        | AstNodeKind::PredefinedIdentifier { symbol_index, .. } = &mut self.kind
+        {
+            Some(symbol_index)
+        } else {
+            None
+        }
+    }
+
+    pub fn get_parameter_types(&self) -> Vec<TypeName> {
+        assert_eq!(self.kind, AstNodeKind::Procedure);
+        let mut result = Vec::new();
+        for parameter in self.children.iter().skip(1) {
+            result.push(parameter.get_variable_type());
+        }
+        result
+    }
+
+    pub fn get_parameter_types_and_return_type(&self) -> (Vec<TypeName>, TypeName) {
+        assert_eq!(self.kind, AstNodeKind::Function);
+        let mut result = Vec::new();
+        for parameter in self.children.iter().skip(1) {
+            result.push(parameter.get_variable_type());
+        }
+        let last = result.pop().unwrap();
+        (result, last)
+    }
+
+    pub fn get_variable_type(&self) -> TypeName {
+        if let AstNodeKind::Type { type_name } = &self.children[1].kind {
+            type_name.clone()
+        } else {
+            unreachable!("Illegal AST shape")
+        }
+    }
 }
 
 /// Build the AST via recursive descent parsing.
@@ -493,6 +560,7 @@ fn parse_cass(
             AstNodeKind::Identifier {
                 original,
                 lower_case,
+                symbol_index: 0,
             },
             start_interval.clone(),
         )]
@@ -505,6 +573,7 @@ fn parse_cass(
             AstNodeKind::PredefinedIdentifier {
                 original,
                 lower_case,
+                symbol_index: 0,
             },
             start_interval.clone(),
         )]
@@ -949,6 +1018,7 @@ fn parse_identifier_declaration(
             AstNodeKind::Identifier {
                 original,
                 lower_case,
+                symbol_index: 0,
             },
             interval,
         )),
@@ -962,6 +1032,7 @@ fn parse_identifier_declaration(
             AstNodeKind::Identifier {
                 original,
                 lower_case,
+                symbol_index: 0,
             },
             interval,
         )),
@@ -991,6 +1062,7 @@ fn parse_identifier_usage(
             AstNodeKind::Identifier {
                 original,
                 lower_case,
+                symbol_index: 0,
             },
             interval,
         )),
@@ -1004,6 +1076,7 @@ fn parse_identifier_usage(
             AstNodeKind::PredefinedIdentifier {
                 original,
                 lower_case,
+                symbol_index: 0,
             },
             interval,
         )),
