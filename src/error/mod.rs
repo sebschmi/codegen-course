@@ -63,6 +63,9 @@ pub enum ParserErrorKind {
 
     /// Found a block that contains no statements, which is forbidden.
     EmptyBlock,
+
+    /// Found a trailing comma in a parameter or argument list, which is forbidden.
+    TrailingComma,
 }
 
 /// A convenience function for creating parser errors.

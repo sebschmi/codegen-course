@@ -260,9 +260,7 @@ fn parse_parameters(
                     if let Some((Ok(Token::CloseParenthesis), interval)) = scanner.peek() {
                         return Err(parser_error(
                             interval.clone(),
-                            ParserErrorKind::ExpectedIdentifier {
-                                found: Token::CloseParenthesis,
-                            },
+                            ParserErrorKind::TrailingComma,
                         ));
                     }
                 }
@@ -540,16 +538,28 @@ fn parse_arguments(
     trace!("parse_arguments {:?}", scanner.peek());
 
     let mut children = Vec::new();
+    let mut trailing_comma = false;
 
     loop {
         match scanner.peek() {
-            Some((Ok(Token::CloseParenthesis), _)) => {
+            Some((Ok(Token::CloseParenthesis), interval)) => {
+                if trailing_comma {
+                    return Err(parser_error(
+                        interval.clone(),
+                        ParserErrorKind::TrailingComma,
+                    ));
+                }
+
                 expect_token(scanner, Token::CloseParenthesis)?;
                 break;
             }
             Some((Ok(_), _)) => {
                 children.push(parse_expression(scanner)?);
-                optional_token(scanner, Token::Comma)?;
+                if optional_token(scanner, Token::Comma)?.is_some() {
+                    trailing_comma = true;
+                } else {
+                    trailing_comma = false;
+                }
             }
             Some((Err(_), _)) => return Err(scanner.next().unwrap().0.unwrap_err()),
             None => return Err(Error::UnexpectedEndOfInput),
@@ -568,6 +578,7 @@ fn parse_type(
         Some((Ok(Token::Array), interval)) => {
             let interval = interval.clone();
             scanner.next();
+            expect_token(scanner, Token::OpenBracket)?;
             let children = match scanner.peek() {
                 Some((Ok(Token::CloseBracket), _)) => vec![],
                 Some((Ok(_), _)) => {
