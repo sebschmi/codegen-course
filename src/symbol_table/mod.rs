@@ -8,11 +8,17 @@ use std::num::NonZeroUsize;
 #[cfg(test)]
 mod tests;
 
+/// The symbol table used by the compiler.
+/// Stores the name and type of each symbol.
+/// Different symbols can have the same name if they are declared in different scopes for example.
+/// Each identifier declaration and usage points to the symbol table after it is built, such that the names of the identifiers can be ignored.
+/// Each symbol has an index, but the index 0 is reserved to mean "uninitialised".
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SymbolTable {
     symbols: Vec<Symbol>,
 }
 
+/// An entry in the symbol table.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Symbol {
     /// The index of the symbol in the symbol table.
@@ -23,20 +29,29 @@ pub struct Symbol {
     symbol_type: SymbolType,
 }
 
+/// The type of a symbol.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SymbolType {
+    /// A function or procedure, i.e. function without return type.
     Function(FunctionType),
+    /// A variable.
     Variable(VariableSymbolType),
+    /// A built-in function, which is a special case of a function as it can have a variable amount of parameters.
     BuiltinFunction,
+    /// The name of the program.
     Program,
 }
 
+/// The type of a function.
+/// It is the list of its argument types plus the (optional) return type.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FunctionType {
     parameter_types: Vec<TypeName>,
     return_type: Option<TypeName>,
 }
 
+/// The type of a variable.
+/// This is the type of the value plus the optional property of being a reference.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct VariableSymbolType {
     /// `true` if the variable is a var-parameter.
@@ -49,35 +64,34 @@ impl SymbolTable {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let mut result = Self {
-            symbols: vec![Symbol::new("".to_string(), SymbolType::BuiltinFunction)],
+            symbols: vec![Symbol {
+                index: 0,
+                name: "".to_string(),
+                symbol_type: SymbolType::BuiltinFunction,
+            }],
         };
-        result.add_symbol(Symbol::new("read".to_string(), SymbolType::BuiltinFunction));
-        result.add_symbol(Symbol::new(
-            "writeln".to_string(),
-            SymbolType::BuiltinFunction,
-        ));
+        result.add_symbol("read".to_string(), SymbolType::BuiltinFunction);
+        result.add_symbol("writeln".to_string(), SymbolType::BuiltinFunction);
         result
     }
 
-    pub fn add_symbol(&mut self, mut symbol: Symbol) -> NonZeroUsize {
-        symbol.index = self.symbols.len();
+    /// Insert a symbol into the symbol table.
+    /// The symbols index will be set to its index in the table.
+    pub fn add_symbol(&mut self, name: String, symbol_type: SymbolType) -> NonZeroUsize {
+        let symbol = Symbol {
+            index: self.symbols.len(),
+            name,
+            symbol_type,
+        };
         debug_assert!(symbol.index > 0);
         self.symbols.push(symbol);
         NonZeroUsize::new(self.symbols.len()).unwrap()
     }
 
+    /// Iterate over all symbols in the table.
+    /// This skips the "null"-symbol at position zero, and starts from position one instead.
     pub fn iter(&self) -> impl Iterator<Item = &Symbol> {
         self.symbols.iter().skip(1)
-    }
-}
-
-impl Symbol {
-    pub fn new(name: String, symbol_type: SymbolType) -> Self {
-        Self {
-            index: 0,
-            name,
-            symbol_type,
-        }
     }
 }
 
@@ -135,7 +149,7 @@ fn build_symbol_table_recursively(
             map_stack.push();
             let identifier = ast.children_mut()[0].get_identifier_lower_case().unwrap();
             let index = symbol_table
-                .add_symbol(Symbol::new(identifier.to_string(), SymbolType::Program))
+                .add_symbol(identifier.to_string(), SymbolType::Program)
                 .get();
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
@@ -148,17 +162,18 @@ fn build_symbol_table_recursively(
             let parameter_types = ast.get_parameter_types();
             let identifier = ast.children_mut()[0].get_identifier_lower_case().unwrap();
             let index = symbol_table
-                .add_symbol(Symbol::new(
+                .add_symbol(
                     identifier.to_string(),
                     SymbolType::Function(FunctionType {
                         parameter_types,
                         return_type: None,
                     }),
-                ))
+                )
                 .get();
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             map_stack.push();
+            // skip to not the build symbol table for the identifier twice
             for child in ast.children_mut().iter_mut().skip(1) {
                 build_symbol_table_recursively(child, symbol_table, map_stack)?;
             }
@@ -168,17 +183,18 @@ fn build_symbol_table_recursively(
             let (parameter_types, return_type) = ast.get_parameter_types_and_return_type();
             let identifier = ast.children_mut()[0].get_identifier_lower_case().unwrap();
             let index = symbol_table
-                .add_symbol(Symbol::new(
+                .add_symbol(
                     identifier.to_string(),
                     SymbolType::Function(FunctionType {
                         parameter_types,
                         return_type: Some(return_type),
                     }),
-                ))
+                )
                 .get();
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             map_stack.push();
+            // skip to not build the symbol table for the identifier twice
             for child in ast.children_mut().iter_mut().skip(1) {
                 build_symbol_table_recursively(child, symbol_table, map_stack)?;
             }
@@ -190,13 +206,13 @@ fn build_symbol_table_recursively(
                 .unwrap()
                 .to_string();
             let index = symbol_table
-                .add_symbol(Symbol::new(
+                .add_symbol(
                     identifier.clone(),
                     SymbolType::Variable(VariableSymbolType {
                         var: true,
                         variable_type: ast.get_variable_type(),
                     }),
-                ))
+                )
                 .get();
             map_stack.insert(identifier, index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
@@ -207,13 +223,13 @@ fn build_symbol_table_recursively(
                 .unwrap()
                 .to_string();
             let index = symbol_table
-                .add_symbol(Symbol::new(
+                .add_symbol(
                     identifier.clone(),
                     SymbolType::Variable(VariableSymbolType {
                         var: false,
                         variable_type: ast.get_variable_type(),
                     }),
-                ))
+                )
                 .get();
             map_stack.insert(identifier, index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
@@ -230,13 +246,13 @@ fn build_symbol_table_recursively(
             for child in ast.children_mut().iter_mut().rev().skip(1).rev() {
                 let identifier = child.get_identifier_lower_case().unwrap().to_string();
                 let index = symbol_table
-                    .add_symbol(Symbol::new(
+                    .add_symbol(
                         identifier.clone(),
                         SymbolType::Variable(VariableSymbolType {
                             var: false,
                             variable_type: variable_type.clone(),
                         }),
-                    ))
+                    )
                     .get();
                 map_stack.insert(identifier, index);
                 *child.get_symbol_index_mut().unwrap() = index;

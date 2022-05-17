@@ -143,22 +143,27 @@ pub enum PrimitiveTypeName {
 }
 
 impl AstNode {
+    /// Return the children of this node.
     pub fn children(&self) -> &[AstNode] {
         &self.children
     }
 
+    /// Return the children of this node as a mutable reference.
     pub fn children_mut(&mut self) -> &mut [AstNode] {
         &mut self.children
     }
 
+    /// Return the source code interval spanned by this node.
     pub fn interval(&self) -> &ScanInterval {
         &self.interval
     }
 
+    /// Return the kind of this node.
     pub fn kind(&self) -> &AstNodeKind {
         &self.kind
     }
 
+    /// Return the lower-case variant of the identifier, if this node is an identifier or predefined identifier.
     pub fn get_identifier_lower_case(&self) -> Option<&str> {
         if let AstNodeKind::Identifier { lower_case, .. }
         | AstNodeKind::PredefinedIdentifier { lower_case, .. } = &self.kind
@@ -169,6 +174,7 @@ impl AstNode {
         }
     }
 
+    /// Return a mutable reference to this node's index in the symbol table, if this node is an identifier or predefined identifier.
     pub fn get_symbol_index_mut(&mut self) -> Option<&mut usize> {
         if let AstNodeKind::Identifier { symbol_index, .. }
         | AstNodeKind::PredefinedIdentifier { symbol_index, .. } = &mut self.kind
@@ -179,8 +185,11 @@ impl AstNode {
         }
     }
 
+    /// Assume that this node is a procedure and get a vector of the types of its parameters.
+    /// Panics if not a procedure, or the AST is malformed.
     pub fn get_parameter_types(&self) -> Vec<TypeName> {
-        assert_eq!(self.kind, AstNodeKind::Procedure);
+        trace!("get_parameter_types {self:?}");
+        debug_assert_eq!(self.kind, AstNodeKind::Procedure);
         let mut result = Vec::new();
         // first child is the identifier of the procedure, last is the body (a block)
         for parameter in self.children.iter().skip(1).rev().skip(1).rev() {
@@ -189,9 +198,11 @@ impl AstNode {
         result
     }
 
+    /// Assume that this node is a function and get a vector of the types of its parameters as well as its return type.
+    /// Panics if not a function, or the AST is malformed.
     pub fn get_parameter_types_and_return_type(&self) -> (Vec<TypeName>, TypeName) {
         trace!("get_parameter_types_and_return_type {self:?}");
-        assert_eq!(self.kind, AstNodeKind::Function);
+        debug_assert_eq!(self.kind, AstNodeKind::Function);
         let mut result = Vec::new();
         // first child is the identifier of the procedure, second to last is the return type and last is the body (a block)
         for parameter in self.children.iter().skip(1).rev().skip(2).rev() {
@@ -213,6 +224,7 @@ impl AstNode {
     }
 
     /// Return the type information that is stored as the last child of this node.
+    /// Panics if this node does not have a type node as its last child.
     pub fn get_variable_type(&self) -> TypeName {
         if let AstNodeKind::Type { type_name } = &self
             .children
