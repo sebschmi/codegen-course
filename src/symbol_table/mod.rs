@@ -1,13 +1,19 @@
 use crate::error::{static_error, Result, StaticErrorKind};
 use crate::parser::{AstNode, AstNodeKind, TypeName};
+use log::trace;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::num::NonZeroUsize;
 
+#[cfg(test)]
+mod tests;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SymbolTable {
     symbols: Vec<Symbol>,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Symbol {
     /// The index of the symbol in the symbol table.
     index: usize,
@@ -17,6 +23,7 @@ pub struct Symbol {
     symbol_type: SymbolType,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum SymbolType {
     Function(FunctionType),
     Variable(VariableSymbolType),
@@ -24,11 +31,13 @@ pub enum SymbolType {
     Program,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FunctionType {
     parameter_types: Vec<TypeName>,
     return_type: Option<TypeName>,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct VariableSymbolType {
     /// `true` if the variable is a var-parameter.
     var: bool,
@@ -72,7 +81,7 @@ impl Symbol {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone)]
 struct MapStack<K, V> {
     stack: Vec<HashMap<K, V>>,
 }
@@ -103,8 +112,15 @@ impl<K: Eq + Hash, V> MapStack<K, V> {
 }
 
 /// Build a single global symbol table and resolve all usages of symbols.
-pub fn build_symbol_table(ast: &mut AstNode, symbol_table: &mut SymbolTable) -> Result<()> {
-    build_symbol_table_recursively(ast, symbol_table, &mut MapStack::default())
+pub fn build_symbol_table(ast: &mut AstNode) -> Result<SymbolTable> {
+    let mut symbol_table = SymbolTable::new();
+    let mut map_stack = MapStack::default();
+    map_stack.push();
+    for symbol in symbol_table.iter() {
+        map_stack.insert(symbol.name.to_string(), symbol.index);
+    }
+
+    build_symbol_table_recursively(ast, &mut symbol_table, &mut map_stack).map(|()| symbol_table)
 }
 
 fn build_symbol_table_recursively(
@@ -210,21 +226,21 @@ fn build_symbol_table_recursively(
             map_stack.pop();
         }
         VariableDeclaration => {
-            let identifier = ast.children_mut()[0]
-                .get_identifier_lower_case()
-                .unwrap()
-                .to_string();
-            let index = symbol_table
-                .add_symbol(Symbol::new(
-                    identifier.clone(),
-                    SymbolType::Variable(VariableSymbolType {
-                        var: false,
-                        variable_type: ast.get_variable_type(),
-                    }),
-                ))
-                .get();
-            map_stack.insert(identifier, index);
-            *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
+            let variable_type = ast.get_variable_type();
+            for child in ast.children_mut().iter_mut().rev().skip(1).rev() {
+                let identifier = child.get_identifier_lower_case().unwrap().to_string();
+                let index = symbol_table
+                    .add_symbol(Symbol::new(
+                        identifier.clone(),
+                        SymbolType::Variable(VariableSymbolType {
+                            var: false,
+                            variable_type: variable_type.clone(),
+                        }),
+                    ))
+                    .get();
+                map_stack.insert(identifier, index);
+                *child.get_symbol_index_mut().unwrap() = index;
+            }
         }
         AssignmentStatement | CallStatement | ReturnStatement | ReadStatement | WriteStatement
         | AssertStatement | IfStatement | WhileStatement | EqOperator | NeqOperator
@@ -249,6 +265,7 @@ fn build_symbol_table_recursively(
             if let Some(&index) = map_stack.get(lower_case) {
                 *ast.get_symbol_index_mut().unwrap() = index;
             } else {
+                trace!("Map stack does not contain {lower_case}: {map_stack:#?}");
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::UndeclaredSymbol {

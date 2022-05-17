@@ -7,7 +7,7 @@ use crate::error::{Error, Result};
 use crate::io::ReadIterator;
 use crate::parser::build_ast;
 use crate::scanner::Scanner;
-use crate::symbol_table::{build_symbol_table, SymbolTable};
+use crate::symbol_table::build_symbol_table;
 use clap::Parser;
 use log::{info, LevelFilter};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
@@ -76,10 +76,9 @@ fn main() -> Result<()> {
     let input = BufReader::new(File::open(&configuration.input).map_err(Error::ReadError)?);
     let scanner = Scanner::new(ReadIterator::new(input))?;
     let mut ast = build_ast(scanner)?;
-    let mut symbol_table = SymbolTable::new();
-    build_symbol_table(&mut ast, &mut symbol_table)?;
+    let symbol_table = build_symbol_table(&mut ast)?;
 
-    println!("{ast:#?}");
+    println!("{symbol_table:#?}");
 
     Ok(())
 }

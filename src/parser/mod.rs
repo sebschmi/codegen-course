@@ -182,27 +182,47 @@ impl AstNode {
     pub fn get_parameter_types(&self) -> Vec<TypeName> {
         assert_eq!(self.kind, AstNodeKind::Procedure);
         let mut result = Vec::new();
-        for parameter in self.children.iter().skip(1) {
+        // first child is the identifier of the procedure, last is the body (a block)
+        for parameter in self.children.iter().skip(1).rev().skip(1).rev() {
             result.push(parameter.get_variable_type());
         }
         result
     }
 
     pub fn get_parameter_types_and_return_type(&self) -> (Vec<TypeName>, TypeName) {
+        trace!("get_parameter_types_and_return_type {self:?}");
         assert_eq!(self.kind, AstNodeKind::Function);
         let mut result = Vec::new();
-        for parameter in self.children.iter().skip(1) {
+        // first child is the identifier of the procedure, second to last is the return type and last is the body (a block)
+        for parameter in self.children.iter().skip(1).rev().skip(2).rev() {
             result.push(parameter.get_variable_type());
         }
-        let last = result.pop().unwrap();
-        (result, last)
-    }
-
-    pub fn get_variable_type(&self) -> TypeName {
-        if let AstNodeKind::Type { type_name } = &self.children[1].kind {
+        let return_type = if let AstNodeKind::Type { type_name } = &self
+            .children()
+            .iter()
+            .rev()
+            .nth(1)
+            .unwrap_or_else(|| unreachable!("Illegal AST shape: {self:#?}"))
+            .kind
+        {
             type_name.clone()
         } else {
-            unreachable!("Illegal AST shape")
+            unreachable!("Illegal AST shape: {self:#?}")
+        };
+        (result, return_type)
+    }
+
+    /// Return the type information that is stored as the last child of this node.
+    pub fn get_variable_type(&self) -> TypeName {
+        if let AstNodeKind::Type { type_name } = &self
+            .children
+            .last()
+            .unwrap_or_else(|| unreachable!("Illegal AST shape: {self:#?}"))
+            .kind
+        {
+            type_name.clone()
+        } else {
+            unreachable!("Illegal AST shape: {self:#?}")
         }
     }
 }
@@ -300,7 +320,7 @@ fn parse_function(
 
     Ok(AstNode {
         children,
-        kind: AstNodeKind::Procedure,
+        kind: AstNodeKind::Function,
         interval: total_interval,
     })
 }

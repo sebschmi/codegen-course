@@ -1437,7 +1437,7 @@ end.";
                             },
                         },
                     ],
-                    kind: AstNodeKind::Procedure,
+                    kind: AstNodeKind::Function,
                     interval: ScanInterval {
                         start_line: 3,
                         end_line: 27,
