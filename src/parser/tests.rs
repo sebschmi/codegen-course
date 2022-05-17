@@ -1727,85 +1727,85 @@ end.";
                 AstNode {
                     children: vec![],
                     kind: AstNodeKind::Identifier {
-                        symbol_index: 0,
                         original: "gcd3".to_string(),
                         lower_case: "gcd3".to_string(),
+                        symbol_index: 0
                     },
                     interval: ScanInterval {
                         start_line: 1,
                         end_line: 1,
                         start_column: 9,
-                        end_column: 13,
-                    },
+                        end_column: 13
+                    }
                 },
                 AstNode {
                     children: vec![
                         AstNode {
                             children: vec![],
                             kind: AstNodeKind::Identifier {
-                                symbol_index: 0,
                                 original: "sort_pair_descending".to_string(),
                                 lower_case: "sort_pair_descending".to_string(),
+                                symbol_index: 0
                             },
                             interval: ScanInterval {
                                 start_line: 2,
                                 end_line: 2,
                                 start_column: 11,
-                                end_column: 31,
-                            },
+                                end_column: 31
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 2,
                                         end_line: 2,
                                         start_column: 32,
-                                        end_column: 36,
-                                    },
+                                        end_column: 36
+                                    }
                                 },
                                 AstNode {
                                     children: vec![AstNode {
                                         children: vec![],
                                         kind: AstNodeKind::Literal {
                                             literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer,
+                                                primitive_type: PrimitiveTypeName::Integer
                                             },
-                                            value: "2".to_string(),
+                                            value: "2".to_string()
                                         },
                                         interval: ScanInterval {
                                             start_line: 2,
                                             end_line: 2,
                                             start_column: 44,
-                                            end_column: 45,
-                                        },
-                                    },],
+                                            end_column: 45
+                                        }
+                                    }],
                                     kind: AstNodeKind::Type {
                                         type_name: TypeName::SizedArray {
-                                            primitive_type: PrimitiveTypeName::Integer,
-                                        },
+                                            primitive_type: PrimitiveTypeName::Integer
+                                        }
                                     },
                                     interval: ScanInterval {
                                         start_line: 2,
                                         end_line: 2,
                                         start_column: 38,
-                                        end_column: 49,
-                                    },
-                                },
+                                        end_column: 49
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::ValueParameter,
                             interval: ScanInterval {
                                 start_line: 2,
                                 end_line: 2,
                                 start_column: 32,
-                                end_column: 49,
-                            },
+                                end_column: 49
+                            }
                         },
                         AstNode {
                             children: vec![AstNode {
@@ -1813,71 +1813,93 @@ end.";
                                     AstNode {
                                         children: vec![
                                             AstNode {
-                                                children: vec![AstNode {
-                                                    children: vec![],
-                                                    kind: AstNodeKind::Literal {
-                                                        literal_type: TypeName::Primitive {
-                                                            primitive_type:
-                                                                PrimitiveTypeName::Integer,
+                                                children: vec![
+                                                    AstNode {
+                                                        children: vec![],
+                                                        kind: AstNodeKind::Identifier {
+                                                            original: "pair".to_string(),
+                                                            lower_case: "pair".to_string(),
+                                                            symbol_index: 0
                                                         },
-                                                        value: "0".to_string(),
+                                                        interval: ScanInterval {
+                                                            start_line: 4,
+                                                            end_line: 4,
+                                                            start_column: 8,
+                                                            end_column: 12
+                                                        }
                                                     },
-                                                    interval: ScanInterval {
-                                                        start_line: 4,
-                                                        end_line: 4,
-                                                        start_column: 13,
-                                                        end_column: 14,
-                                                    },
-                                                },],
-                                                kind: AstNodeKind::Identifier {
-                                                    symbol_index: 0,
-                                                    original: "pair".to_string(),
-                                                    lower_case: "pair".to_string(),
-                                                },
+                                                    AstNode {
+                                                        children: vec![],
+                                                        kind: AstNodeKind::Literal {
+                                                            literal_type: TypeName::Primitive {
+                                                                primitive_type: PrimitiveTypeName::Integer
+                                                            },
+                                                            value: "0".to_string()
+                                                        },
+                                                        interval: ScanInterval {
+                                                            start_line: 4,
+                                                            end_line: 4,
+                                                            start_column: 13,
+                                                            end_column: 14
+                                                        }
+                                                    }
+                                                ],
+                                                kind: AstNodeKind::IndexOperator,
                                                 interval: ScanInterval {
                                                     start_line: 4,
                                                     end_line: 4,
                                                     start_column: 8,
-                                                    end_column: 15,
-                                                },
+                                                    end_column: 15
+                                                }
                                             },
                                             AstNode {
-                                                children: vec![AstNode {
-                                                    children: vec![],
-                                                    kind: AstNodeKind::Literal {
-                                                        literal_type: TypeName::Primitive {
-                                                            primitive_type:
-                                                                PrimitiveTypeName::Integer,
+                                                children: vec![
+                                                    AstNode {
+                                                        children: vec![],
+                                                        kind: AstNodeKind::Identifier {
+                                                            original: "pair".to_string(),
+                                                            lower_case: "pair".to_string(),
+                                                            symbol_index: 0
                                                         },
-                                                        value: "1".to_string(),
+                                                        interval: ScanInterval {
+                                                            start_line: 4,
+                                                            end_line: 4,
+                                                            start_column: 18,
+                                                            end_column: 22
+                                                        }
                                                     },
-                                                    interval: ScanInterval {
-                                                        start_line: 4,
-                                                        end_line: 4,
-                                                        start_column: 23,
-                                                        end_column: 24,
-                                                    },
-                                                },],
-                                                kind: AstNodeKind::Identifier {
-                                                    symbol_index: 0,
-                                                    original: "pair".to_string(),
-                                                    lower_case: "pair".to_string(),
-                                                },
+                                                    AstNode {
+                                                        children: vec![],
+                                                        kind: AstNodeKind::Literal {
+                                                            literal_type: TypeName::Primitive {
+                                                                primitive_type: PrimitiveTypeName::Integer
+                                                            },
+                                                            value: "1".to_string()
+                                                        },
+                                                        interval: ScanInterval {
+                                                            start_line: 4,
+                                                            end_line: 4,
+                                                            start_column: 23,
+                                                            end_column: 24
+                                                        }
+                                                    }
+                                                ],
+                                                kind: AstNodeKind::IndexOperator,
                                                 interval: ScanInterval {
                                                     start_line: 4,
                                                     end_line: 4,
                                                     start_column: 18,
-                                                    end_column: 25,
-                                                },
-                                            },
+                                                    end_column: 25
+                                                }
+                                            }
                                         ],
                                         kind: AstNodeKind::LtOperator,
                                         interval: ScanInterval {
                                             start_line: 4,
                                             end_line: 4,
                                             start_column: 8,
-                                            end_column: 25,
-                                        },
+                                            end_column: 25
+                                        }
                                     },
                                     AstNode {
                                         children: vec![
@@ -1886,375 +1908,429 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
                                                             original: "tmp".to_string(),
                                                             lower_case: "tmp".to_string(),
+                                                            symbol_index: 0
                                                         },
                                                         interval: ScanInterval {
                                                             start_line: 6,
                                                             end_line: 6,
                                                             start_column: 13,
-                                                            end_column: 16,
-                                                        },
+                                                            end_column: 16
+                                                        }
                                                     },
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Type {
                                                             type_name: TypeName::Primitive {
-                                                                primitive_type:
-                                                                    PrimitiveTypeName::Integer,
-                                                            },
+                                                                primitive_type: PrimitiveTypeName::Integer
+                                                            }
                                                         },
                                                         interval: ScanInterval {
                                                             start_line: 6,
                                                             end_line: 6,
                                                             start_column: 18,
-                                                            end_column: 25,
-                                                        },
-                                                    },
+                                                            end_column: 25
+                                                        }
+                                                    }
                                                 ],
                                                 kind: AstNodeKind::VariableDeclaration,
                                                 interval: ScanInterval {
                                                     start_line: 6,
                                                     end_line: 6,
                                                     start_column: 9,
-                                                    end_column: 25,
-                                                },
+                                                    end_column: 25
+                                                }
                                             },
                                             AstNode {
                                                 children: vec![
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
                                                             original: "tmp".to_string(),
                                                             lower_case: "tmp".to_string(),
+                                                            symbol_index: 0
                                                         },
                                                         interval: ScanInterval {
                                                             start_line: 7,
                                                             end_line: 7,
                                                             start_column: 9,
-                                                            end_column: 12,
-                                                        },
+                                                            end_column: 12
+                                                        }
                                                     },
                                                     AstNode {
-                                                        children: vec![AstNode {
-                                                            children: vec![],
-                                                            kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type:
-                                                                        PrimitiveTypeName::Integer,
+                                                        children: vec![
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Identifier {
+                                                                    original: "pair".to_string(),
+                                                                    lower_case: "pair".to_string(),
+                                                                    symbol_index: 0
                                                                 },
-                                                                value: "0".to_string(),
+                                                                interval: ScanInterval {
+                                                                    start_line: 7,
+                                                                    end_line: 7,
+                                                                    start_column: 16,
+                                                                    end_column: 20
+                                                                }
                                                             },
-                                                            interval: ScanInterval {
-                                                                start_line: 7,
-                                                                end_line: 7,
-                                                                start_column: 21,
-                                                                end_column: 22,
-                                                            },
-                                                        },],
-                                                        kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
-                                                            original: "pair".to_string(),
-                                                            lower_case: "pair".to_string(),
-                                                        },
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Literal {
+                                                                    literal_type: TypeName::Primitive {
+                                                                        primitive_type: PrimitiveTypeName::Integer
+                                                                    },
+                                                                    value: "0".to_string()
+                                                                },
+                                                                interval: ScanInterval {
+                                                                    start_line: 7,
+                                                                    end_line: 7,
+                                                                    start_column: 21,
+                                                                    end_column: 22
+                                                                }
+                                                            }
+                                                        ],
+                                                        kind: AstNodeKind::IndexOperator,
                                                         interval: ScanInterval {
                                                             start_line: 7,
                                                             end_line: 7,
                                                             start_column: 16,
-                                                            end_column: 23,
-                                                        },
-                                                    },
+                                                            end_column: 23
+                                                        }
+                                                    }
                                                 ],
                                                 kind: AstNodeKind::AssignmentStatement,
                                                 interval: ScanInterval {
                                                     start_line: 7,
                                                     end_line: 7,
                                                     start_column: 9,
-                                                    end_column: 23,
-                                                },
+                                                    end_column: 23
+                                                }
                                             },
                                             AstNode {
                                                 children: vec![
                                                     AstNode {
-                                                        children: vec![AstNode {
-                                                            children: vec![],
-                                                            kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type:
-                                                                        PrimitiveTypeName::Integer,
+                                                        children: vec![
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Identifier {
+                                                                    original: "pair".to_string(),
+                                                                    lower_case: "pair".to_string(),
+                                                                    symbol_index: 0
                                                                 },
-                                                                value: "0".to_string(),
+                                                                interval: ScanInterval {
+                                                                    start_line: 8,
+                                                                    end_line: 8,
+                                                                    start_column: 9,
+                                                                    end_column: 13
+                                                                }
                                                             },
-                                                            interval: ScanInterval {
-                                                                start_line: 8,
-                                                                end_line: 8,
-                                                                start_column: 14,
-                                                                end_column: 15,
-                                                            },
-                                                        },],
-                                                        kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
-                                                            original: "pair".to_string(),
-                                                            lower_case: "pair".to_string(),
-                                                        },
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Literal {
+                                                                    literal_type: TypeName::Primitive {
+                                                                        primitive_type: PrimitiveTypeName::Integer
+                                                                    },
+                                                                    value: "0".to_string()
+                                                                },
+                                                                interval: ScanInterval {
+                                                                    start_line: 8,
+                                                                    end_line: 8,
+                                                                    start_column: 14,
+                                                                    end_column: 15
+                                                                }
+                                                            }
+                                                        ],
+                                                        kind: AstNodeKind::IndexOperator,
                                                         interval: ScanInterval {
                                                             start_line: 8,
                                                             end_line: 8,
                                                             start_column: 9,
-                                                            end_column: 16,
-                                                        },
+                                                            end_column: 16
+                                                        }
                                                     },
                                                     AstNode {
-                                                        children: vec![AstNode {
-                                                            children: vec![],
-                                                            kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type:
-                                                                        PrimitiveTypeName::Integer,
+                                                        children: vec![
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Identifier {
+                                                                    original: "pair".to_string(),
+                                                                    lower_case: "pair".to_string(),
+                                                                    symbol_index: 0
                                                                 },
-                                                                value: "1".to_string(),
+                                                                interval: ScanInterval {
+                                                                    start_line: 8,
+                                                                    end_line: 8,
+                                                                    start_column: 20,
+                                                                    end_column: 24
+                                                                }
                                                             },
-                                                            interval: ScanInterval {
-                                                                start_line: 8,
-                                                                end_line: 8,
-                                                                start_column: 25,
-                                                                end_column: 26,
-                                                            },
-                                                        },],
-                                                        kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
-                                                            original: "pair".to_string(),
-                                                            lower_case: "pair".to_string(),
-                                                        },
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Literal {
+                                                                    literal_type: TypeName::Primitive {
+                                                                        primitive_type: PrimitiveTypeName::Integer
+                                                                    },
+                                                                    value: "1".to_string()
+                                                                },
+                                                                interval: ScanInterval {
+                                                                    start_line: 8,
+                                                                    end_line: 8,
+                                                                    start_column: 25,
+                                                                    end_column: 26
+                                                                }
+                                                            }
+                                                        ],
+                                                        kind: AstNodeKind::IndexOperator,
                                                         interval: ScanInterval {
                                                             start_line: 8,
                                                             end_line: 8,
                                                             start_column: 20,
-                                                            end_column: 27,
-                                                        },
-                                                    },
+                                                            end_column: 27
+                                                        }
+                                                    }
                                                 ],
                                                 kind: AstNodeKind::AssignmentStatement,
                                                 interval: ScanInterval {
                                                     start_line: 8,
                                                     end_line: 8,
                                                     start_column: 9,
-                                                    end_column: 27,
-                                                },
+                                                    end_column: 27
+                                                }
                                             },
                                             AstNode {
                                                 children: vec![
                                                     AstNode {
-                                                        children: vec![AstNode {
-                                                            children: vec![],
-                                                            kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type:
-                                                                        PrimitiveTypeName::Integer,
+                                                        children: vec![
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Identifier {
+                                                                    original: "pair".to_string(),
+                                                                    lower_case: "pair".to_string(),
+                                                                    symbol_index: 0
                                                                 },
-                                                                value: "1".to_string(),
+                                                                interval: ScanInterval {
+                                                                    start_line: 9,
+                                                                    end_line: 9,
+                                                                    start_column: 9,
+                                                                    end_column: 13
+                                                                }
                                                             },
-                                                            interval: ScanInterval {
-                                                                start_line: 9,
-                                                                end_line: 9,
-                                                                start_column: 14,
-                                                                end_column: 15,
-                                                            },
-                                                        },],
-                                                        kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
-                                                            original: "pair".to_string(),
-                                                            lower_case: "pair".to_string(),
-                                                        },
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Literal {
+                                                                    literal_type: TypeName::Primitive {
+                                                                        primitive_type: PrimitiveTypeName::Integer
+                                                                    },
+                                                                    value: "1".to_string()
+                                                                },
+                                                                interval: ScanInterval {
+                                                                    start_line: 9,
+                                                                    end_line: 9,
+                                                                    start_column: 14,
+                                                                    end_column: 15
+                                                                }
+                                                            }
+                                                        ],
+                                                        kind: AstNodeKind::IndexOperator,
                                                         interval: ScanInterval {
                                                             start_line: 9,
                                                             end_line: 9,
                                                             start_column: 9,
-                                                            end_column: 16,
-                                                        },
+                                                            end_column: 16
+                                                        }
                                                     },
                                                     AstNode {
-                                                        children: vec![AstNode {
-                                                            children: vec![],
-                                                            kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type:
-                                                                        PrimitiveTypeName::Integer,
+                                                        children: vec![
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Identifier {
+                                                                    original: "pair".to_string(),
+                                                                    lower_case: "pair".to_string(),
+                                                                    symbol_index: 0
                                                                 },
-                                                                value: "0".to_string(),
+                                                                interval: ScanInterval {
+                                                                    start_line: 9,
+                                                                    end_line: 9,
+                                                                    start_column: 20,
+                                                                    end_column: 24
+                                                                }
                                                             },
-                                                            interval: ScanInterval {
-                                                                start_line: 9,
-                                                                end_line: 9,
-                                                                start_column: 25,
-                                                                end_column: 26,
-                                                            },
-                                                        },],
-                                                        kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
-                                                            original: "pair".to_string(),
-                                                            lower_case: "pair".to_string(),
-                                                        },
+                                                            AstNode {
+                                                                children: vec![],
+                                                                kind: AstNodeKind::Literal {
+                                                                    literal_type: TypeName::Primitive {
+                                                                        primitive_type: PrimitiveTypeName::Integer
+                                                                    },
+                                                                    value: "0".to_string()
+                                                                },
+                                                                interval: ScanInterval {
+                                                                    start_line: 9,
+                                                                    end_line: 9,
+                                                                    start_column: 25,
+                                                                    end_column: 26
+                                                                }
+                                                            }
+                                                        ],
+                                                        kind: AstNodeKind::IndexOperator,
                                                         interval: ScanInterval {
                                                             start_line: 9,
                                                             end_line: 9,
                                                             start_column: 20,
-                                                            end_column: 27,
-                                                        },
-                                                    },
+                                                            end_column: 27
+                                                        }
+                                                    }
                                                 ],
                                                 kind: AstNodeKind::AssignmentStatement,
                                                 interval: ScanInterval {
                                                     start_line: 9,
                                                     end_line: 9,
                                                     start_column: 9,
-                                                    end_column: 27,
-                                                },
-                                            },
+                                                    end_column: 27
+                                                }
+                                            }
                                         ],
                                         kind: AstNodeKind::Block,
                                         interval: ScanInterval {
                                             start_line: 5,
                                             end_line: 10,
                                             start_column: 5,
-                                            end_column: 8,
-                                        },
-                                    },
+                                            end_column: 8
+                                        }
+                                    }
                                 ],
                                 kind: AstNodeKind::IfStatement,
                                 interval: ScanInterval {
                                     start_line: 4,
                                     end_line: 10,
                                     start_column: 5,
-                                    end_column: 8,
-                                },
-                            },],
+                                    end_column: 8
+                                }
+                            }],
                             kind: AstNodeKind::Block,
                             interval: ScanInterval {
                                 start_line: 3,
                                 end_line: 11,
                                 start_column: 1,
-                                end_column: 4,
-                            },
-                        },
+                                end_column: 4
+                            }
+                        }
                     ],
                     kind: AstNodeKind::Procedure,
                     interval: ScanInterval {
                         start_line: 2,
                         end_line: 11,
                         start_column: 1,
-                        end_column: 5,
-                    },
+                        end_column: 5
+                    }
                 },
                 AstNode {
                     children: vec![
                         AstNode {
                             children: vec![],
                             kind: AstNodeKind::Identifier {
-                                symbol_index: 0,
                                 original: "gcd".to_string(),
                                 lower_case: "gcd".to_string(),
+                                symbol_index: 0
                             },
                             interval: ScanInterval {
                                 start_line: 13,
                                 end_line: 13,
                                 start_column: 11,
-                                end_column: 14,
-                            },
+                                end_column: 14
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 13,
                                         end_line: 13,
                                         start_column: 15,
-                                        end_column: 19,
-                                    },
+                                        end_column: 19
+                                    }
                                 },
                                 AstNode {
                                     children: vec![AstNode {
                                         children: vec![],
                                         kind: AstNodeKind::Literal {
                                             literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer,
+                                                primitive_type: PrimitiveTypeName::Integer
                                             },
-                                            value: "2".to_string(),
+                                            value: "2".to_string()
                                         },
                                         interval: ScanInterval {
                                             start_line: 13,
                                             end_line: 13,
                                             start_column: 27,
-                                            end_column: 28,
-                                        },
-                                    },],
+                                            end_column: 28
+                                        }
+                                    }],
                                     kind: AstNodeKind::Type {
                                         type_name: TypeName::SizedArray {
-                                            primitive_type: PrimitiveTypeName::Integer,
-                                        },
+                                            primitive_type: PrimitiveTypeName::Integer
+                                        }
                                     },
                                     interval: ScanInterval {
                                         start_line: 13,
                                         end_line: 13,
                                         start_column: 21,
-                                        end_column: 32,
-                                    },
-                                },
+                                        end_column: 32
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::ValueParameter,
                             interval: ScanInterval {
                                 start_line: 13,
                                 end_line: 13,
                                 start_column: 15,
-                                end_column: 32,
-                            },
+                                end_column: 32
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "result".to_string(),
                                         lower_case: "result".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 13,
                                         end_line: 13,
                                         start_column: 46,
-                                        end_column: 52,
-                                    },
+                                        end_column: 52
+                                    }
                                 },
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Type {
                                         type_name: TypeName::Primitive {
-                                            primitive_type: PrimitiveTypeName::Integer,
-                                        },
+                                            primitive_type: PrimitiveTypeName::Integer
+                                        }
                                     },
                                     interval: ScanInterval {
                                         start_line: 13,
                                         end_line: 13,
                                         start_column: 54,
-                                        end_column: 61,
-                                    },
-                                },
+                                        end_column: 61
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::VarParameter,
                             interval: ScanInterval {
                                 start_line: 13,
                                 end_line: 13,
                                 start_column: 42,
-                                end_column: 61,
-                            },
+                                end_column: 61
+                            }
                         },
                         AstNode {
                             children: vec![
@@ -2263,350 +2339,418 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
                                                 original: "sort_pair_descending".to_string(),
                                                 lower_case: "sort_pair_descending".to_string(),
+                                                symbol_index: 0
                                             },
                                             interval: ScanInterval {
                                                 start_line: 15,
                                                 end_line: 15,
                                                 start_column: 5,
-                                                end_column: 25,
-                                            },
+                                                end_column: 25
+                                            }
                                         },
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
                                                 original: "pair".to_string(),
                                                 lower_case: "pair".to_string(),
+                                                symbol_index: 0
                                             },
                                             interval: ScanInterval {
                                                 start_line: 15,
                                                 end_line: 15,
                                                 start_column: 26,
-                                                end_column: 30,
-                                            },
-                                        },
+                                                end_column: 30
+                                            }
+                                        }
                                     ],
                                     kind: AstNodeKind::CallStatement,
                                     interval: ScanInterval {
                                         start_line: 15,
                                         end_line: 15,
                                         start_column: 5,
-                                        end_column: 30,
-                                    },
+                                        end_column: 30
+                                    }
                                 },
                                 AstNode {
                                     children: vec![
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
                                                 original: "new".to_string(),
                                                 lower_case: "new".to_string(),
+                                                symbol_index: 0
                                             },
                                             interval: ScanInterval {
                                                 start_line: 17,
                                                 end_line: 17,
                                                 start_column: 9,
-                                                end_column: 12,
-                                            },
+                                                end_column: 12
+                                            }
                                         },
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Type {
                                                 type_name: TypeName::Primitive {
-                                                    primitive_type: PrimitiveTypeName::Integer,
-                                                },
+                                                    primitive_type: PrimitiveTypeName::Integer
+                                                }
                                             },
                                             interval: ScanInterval {
                                                 start_line: 17,
                                                 end_line: 17,
                                                 start_column: 14,
-                                                end_column: 21,
-                                            },
-                                        },
+                                                end_column: 21
+                                            }
+                                        }
                                     ],
                                     kind: AstNodeKind::VariableDeclaration,
                                     interval: ScanInterval {
                                         start_line: 17,
                                         end_line: 17,
                                         start_column: 5,
-                                        end_column: 21,
-                                    },
+                                        end_column: 21
+                                    }
                                 },
                                 AstNode {
                                     children: vec![
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
                                                 original: "new".to_string(),
                                                 lower_case: "new".to_string(),
+                                                symbol_index: 0
                                             },
                                             interval: ScanInterval {
                                                 start_line: 18,
                                                 end_line: 18,
                                                 start_column: 5,
-                                                end_column: 8,
-                                            },
+                                                end_column: 8
+                                            }
                                         },
                                         AstNode {
                                             children: vec![
                                                 AstNode {
-                                                    children: vec![AstNode {
-                                                        children: vec![],
-                                                        kind: AstNodeKind::Literal {
-                                                            literal_type: TypeName::Primitive {
-                                                                primitive_type:
-                                                                    PrimitiveTypeName::Integer,
+                                                    children: vec![
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Identifier {
+                                                                original: "pair".to_string(),
+                                                                lower_case: "pair".to_string(),
+                                                                symbol_index: 0
                                                             },
-                                                            value: "0".to_string(),
+                                                            interval: ScanInterval {
+                                                                start_line: 18,
+                                                                end_line: 18,
+                                                                start_column: 12,
+                                                                end_column: 16
+                                                            }
                                                         },
-                                                        interval: ScanInterval {
-                                                            start_line: 18,
-                                                            end_line: 18,
-                                                            start_column: 17,
-                                                            end_column: 18,
-                                                        },
-                                                    },],
-                                                    kind: AstNodeKind::Identifier {
-                                                        symbol_index: 0,
-                                                        original: "pair".to_string(),
-                                                        lower_case: "pair".to_string(),
-                                                    },
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Literal {
+                                                                literal_type: TypeName::Primitive {
+                                                                    primitive_type: PrimitiveTypeName::Integer
+                                                                },
+                                                                value: "0".to_string()
+                                                            },
+                                                            interval: ScanInterval {
+                                                                start_line: 18,
+                                                                end_line: 18,
+                                                                start_column: 17,
+                                                                end_column: 18
+                                                            }
+                                                        }
+                                                    ],
+                                                    kind: AstNodeKind::IndexOperator,
                                                     interval: ScanInterval {
                                                         start_line: 18,
                                                         end_line: 18,
                                                         start_column: 12,
-                                                        end_column: 19,
-                                                    },
+                                                        end_column: 19
+                                                    }
                                                 },
                                                 AstNode {
-                                                    children: vec![AstNode {
-                                                        children: vec![],
-                                                        kind: AstNodeKind::Literal {
-                                                            literal_type: TypeName::Primitive {
-                                                                primitive_type:
-                                                                    PrimitiveTypeName::Integer,
+                                                    children: vec![
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Identifier {
+                                                                original: "pair".to_string(),
+                                                                lower_case: "pair".to_string(),
+                                                                symbol_index: 0
                                                             },
-                                                            value: "1".to_string(),
+                                                            interval: ScanInterval {
+                                                                start_line: 18,
+                                                                end_line: 18,
+                                                                start_column: 22,
+                                                                end_column: 26
+                                                            }
                                                         },
-                                                        interval: ScanInterval {
-                                                            start_line: 18,
-                                                            end_line: 18,
-                                                            start_column: 27,
-                                                            end_column: 28,
-                                                        },
-                                                    },],
-                                                    kind: AstNodeKind::Identifier {
-                                                        symbol_index: 0,
-                                                        original: "pair".to_string(),
-                                                        lower_case: "pair".to_string(),
-                                                    },
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Literal {
+                                                                literal_type: TypeName::Primitive {
+                                                                    primitive_type: PrimitiveTypeName::Integer
+                                                                },
+                                                                value: "1".to_string()
+                                                            },
+                                                            interval: ScanInterval {
+                                                                start_line: 18,
+                                                                end_line: 18,
+                                                                start_column: 27,
+                                                                end_column: 28
+                                                            }
+                                                        }
+                                                    ],
+                                                    kind: AstNodeKind::IndexOperator,
                                                     interval: ScanInterval {
                                                         start_line: 18,
                                                         end_line: 18,
                                                         start_column: 22,
-                                                        end_column: 29,
-                                                    },
-                                                },
+                                                        end_column: 29
+                                                    }
+                                                }
                                             ],
                                             kind: AstNodeKind::ModOperator,
                                             interval: ScanInterval {
                                                 start_line: 18,
                                                 end_line: 18,
                                                 start_column: 20,
-                                                end_column: 29,
-                                            },
-                                        },
+                                                end_column: 29
+                                            }
+                                        }
                                     ],
                                     kind: AstNodeKind::AssignmentStatement,
                                     interval: ScanInterval {
                                         start_line: 18,
                                         end_line: 18,
                                         start_column: 5,
-                                        end_column: 29,
-                                    },
-                                },
-                                AstNode {
-                                    children: vec![
-                                        AstNode {
-                                            children: vec![AstNode {
-                                                children: vec![],
-                                                kind: AstNodeKind::Literal {
-                                                    literal_type: TypeName::Primitive {
-                                                        primitive_type: PrimitiveTypeName::Integer,
-                                                    },
-                                                    value: "0".to_string(),
-                                                },
-                                                interval: ScanInterval {
-                                                    start_line: 19,
-                                                    end_line: 19,
-                                                    start_column: 10,
-                                                    end_column: 11,
-                                                },
-                                            },],
-                                            kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
-                                                original: "pair".to_string(),
-                                                lower_case: "pair".to_string(),
-                                            },
-                                            interval: ScanInterval {
-                                                start_line: 19,
-                                                end_line: 19,
-                                                start_column: 5,
-                                                end_column: 12,
-                                            },
-                                        },
-                                        AstNode {
-                                            children: vec![AstNode {
-                                                children: vec![],
-                                                kind: AstNodeKind::Literal {
-                                                    literal_type: TypeName::Primitive {
-                                                        primitive_type: PrimitiveTypeName::Integer,
-                                                    },
-                                                    value: "1".to_string(),
-                                                },
-                                                interval: ScanInterval {
-                                                    start_line: 19,
-                                                    end_line: 19,
-                                                    start_column: 21,
-                                                    end_column: 22,
-                                                },
-                                            },],
-                                            kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
-                                                original: "pair".to_string(),
-                                                lower_case: "pair".to_string(),
-                                            },
-                                            interval: ScanInterval {
-                                                start_line: 19,
-                                                end_line: 19,
-                                                start_column: 16,
-                                                end_column: 23,
-                                            },
-                                        },
-                                    ],
-                                    kind: AstNodeKind::AssignmentStatement,
-                                    interval: ScanInterval {
-                                        start_line: 19,
-                                        end_line: 19,
-                                        start_column: 5,
-                                        end_column: 23,
-                                    },
-                                },
-                                AstNode {
-                                    children: vec![
-                                        AstNode {
-                                            children: vec![AstNode {
-                                                children: vec![],
-                                                kind: AstNodeKind::Literal {
-                                                    literal_type: TypeName::Primitive {
-                                                        primitive_type: PrimitiveTypeName::Integer,
-                                                    },
-                                                    value: "1".to_string(),
-                                                },
-                                                interval: ScanInterval {
-                                                    start_line: 20,
-                                                    end_line: 20,
-                                                    start_column: 10,
-                                                    end_column: 11,
-                                                },
-                                            },],
-                                            kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
-                                                original: "pair".to_string(),
-                                                lower_case: "pair".to_string(),
-                                            },
-                                            interval: ScanInterval {
-                                                start_line: 20,
-                                                end_line: 20,
-                                                start_column: 5,
-                                                end_column: 12,
-                                            },
-                                        },
-                                        AstNode {
-                                            children: vec![],
-                                            kind: AstNodeKind::Identifier {
-                                                symbol_index: 0,
-                                                original: "new".to_string(),
-                                                lower_case: "new".to_string(),
-                                            },
-                                            interval: ScanInterval {
-                                                start_line: 20,
-                                                end_line: 20,
-                                                start_column: 16,
-                                                end_column: 19,
-                                            },
-                                        },
-                                    ],
-                                    kind: AstNodeKind::AssignmentStatement,
-                                    interval: ScanInterval {
-                                        start_line: 20,
-                                        end_line: 20,
-                                        start_column: 5,
-                                        end_column: 19,
-                                    },
+                                        end_column: 29
+                                    }
                                 },
                                 AstNode {
                                     children: vec![
                                         AstNode {
                                             children: vec![
                                                 AstNode {
-                                                    children: vec![AstNode {
-                                                        children: vec![],
-                                                        kind: AstNodeKind::Literal {
-                                                            literal_type: TypeName::Primitive {
-                                                                primitive_type:
-                                                                    PrimitiveTypeName::Integer,
-                                                            },
-                                                            value: "1".to_string(),
-                                                        },
-                                                        interval: ScanInterval {
-                                                            start_line: 22,
-                                                            end_line: 22,
-                                                            start_column: 13,
-                                                            end_column: 14,
-                                                        },
-                                                    },],
+                                                    children: vec![],
                                                     kind: AstNodeKind::Identifier {
-                                                        symbol_index: 0,
                                                         original: "pair".to_string(),
                                                         lower_case: "pair".to_string(),
+                                                        symbol_index: 0
                                                     },
                                                     interval: ScanInterval {
-                                                        start_line: 22,
-                                                        end_line: 22,
-                                                        start_column: 8,
-                                                        end_column: 15,
-                                                    },
+                                                        start_line: 19,
+                                                        end_line: 19,
+                                                        start_column: 5,
+                                                        end_column: 9
+                                                    }
                                                 },
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Literal {
                                                         literal_type: TypeName::Primitive {
-                                                            primitive_type:
-                                                                PrimitiveTypeName::Integer,
+                                                            primitive_type: PrimitiveTypeName::Integer
                                                         },
-                                                        value: "0".to_string(),
+                                                        value: "0".to_string()
+                                                    },
+                                                    interval: ScanInterval {
+                                                        start_line: 19,
+                                                        end_line: 19,
+                                                        start_column: 10,
+                                                        end_column: 11
+                                                    }
+                                                }
+                                            ],
+                                            kind: AstNodeKind::IndexOperator,
+                                            interval: ScanInterval {
+                                                start_line: 19,
+                                                end_line: 19,
+                                                start_column: 5,
+                                                end_column: 12
+                                            }
+                                        },
+                                        AstNode {
+                                            children: vec![
+                                                AstNode {
+                                                    children: vec![],
+                                                    kind: AstNodeKind::Identifier {
+                                                        original: "pair".to_string(),
+                                                        lower_case: "pair".to_string(),
+                                                        symbol_index: 0
+                                                    },
+                                                    interval: ScanInterval {
+                                                        start_line: 19,
+                                                        end_line: 19,
+                                                        start_column: 16,
+                                                        end_column: 20
+                                                    }
+                                                },
+                                                AstNode {
+                                                    children: vec![],
+                                                    kind: AstNodeKind::Literal {
+                                                        literal_type: TypeName::Primitive {
+                                                            primitive_type: PrimitiveTypeName::Integer
+                                                        },
+                                                        value: "1".to_string()
+                                                    },
+                                                    interval: ScanInterval {
+                                                        start_line: 19,
+                                                        end_line: 19,
+                                                        start_column: 21,
+                                                        end_column: 22
+                                                    }
+                                                }
+                                            ],
+                                            kind: AstNodeKind::IndexOperator,
+                                            interval: ScanInterval {
+                                                start_line: 19,
+                                                end_line: 19,
+                                                start_column: 16,
+                                                end_column: 23
+                                            }
+                                        }
+                                    ],
+                                    kind: AstNodeKind::AssignmentStatement,
+                                    interval: ScanInterval {
+                                        start_line: 19,
+                                        end_line: 19,
+                                        start_column: 5,
+                                        end_column: 23
+                                    }
+                                },
+                                AstNode {
+                                    children: vec![
+                                        AstNode {
+                                            children: vec![
+                                                AstNode {
+                                                    children: vec![],
+                                                    kind: AstNodeKind::Identifier {
+                                                        original: "pair".to_string(),
+                                                        lower_case: "pair".to_string(),
+                                                        symbol_index: 0
+                                                    },
+                                                    interval: ScanInterval {
+                                                        start_line: 20,
+                                                        end_line: 20,
+                                                        start_column: 5,
+                                                        end_column: 9
+                                                    }
+                                                },
+                                                AstNode {
+                                                    children: vec![],
+                                                    kind: AstNodeKind::Literal {
+                                                        literal_type: TypeName::Primitive {
+                                                            primitive_type: PrimitiveTypeName::Integer
+                                                        },
+                                                        value: "1".to_string()
+                                                    },
+                                                    interval: ScanInterval {
+                                                        start_line: 20,
+                                                        end_line: 20,
+                                                        start_column: 10,
+                                                        end_column: 11
+                                                    }
+                                                }
+                                            ],
+                                            kind: AstNodeKind::IndexOperator,
+                                            interval: ScanInterval {
+                                                start_line: 20,
+                                                end_line: 20,
+                                                start_column: 5,
+                                                end_column: 12
+                                            }
+                                        },
+                                        AstNode {
+                                            children: vec![],
+                                            kind: AstNodeKind::Identifier {
+                                                original: "new".to_string(),
+                                                lower_case: "new".to_string(),
+                                                symbol_index: 0
+                                            },
+                                            interval: ScanInterval {
+                                                start_line: 20,
+                                                end_line: 20,
+                                                start_column: 16,
+                                                end_column: 19
+                                            }
+                                        }
+                                    ],
+                                    kind: AstNodeKind::AssignmentStatement,
+                                    interval: ScanInterval {
+                                        start_line: 20,
+                                        end_line: 20,
+                                        start_column: 5,
+                                        end_column: 19
+                                    }
+                                },
+                                AstNode {
+                                    children: vec![
+                                        AstNode {
+                                            children: vec![
+                                                AstNode {
+                                                    children: vec![
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Identifier {
+                                                                original: "pair".to_string(),
+                                                                lower_case: "pair".to_string(),
+                                                                symbol_index: 0
+                                                            },
+                                                            interval: ScanInterval {
+                                                                start_line: 22,
+                                                                end_line: 22,
+                                                                start_column: 8,
+                                                                end_column: 12
+                                                            }
+                                                        },
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Literal {
+                                                                literal_type: TypeName::Primitive {
+                                                                    primitive_type: PrimitiveTypeName::Integer
+                                                                },
+                                                                value: "1".to_string()
+                                                            },
+                                                            interval: ScanInterval {
+                                                                start_line: 22,
+                                                                end_line: 22,
+                                                                start_column: 13,
+                                                                end_column: 14
+                                                            }
+                                                        }
+                                                    ],
+                                                    kind: AstNodeKind::IndexOperator,
+                                                    interval: ScanInterval {
+                                                        start_line: 22,
+                                                        end_line: 22,
+                                                        start_column: 8,
+                                                        end_column: 15
+                                                    }
+                                                },
+                                                AstNode {
+                                                    children: vec![],
+                                                    kind: AstNodeKind::Literal {
+                                                        literal_type: TypeName::Primitive {
+                                                            primitive_type: PrimitiveTypeName::Integer
+                                                        },
+                                                        value: "0".to_string()
                                                     },
                                                     interval: ScanInterval {
                                                         start_line: 22,
                                                         end_line: 22,
                                                         start_column: 18,
-                                                        end_column: 19,
-                                                    },
-                                                },
+                                                        end_column: 19
+                                                    }
+                                                }
                                             ],
                                             kind: AstNodeKind::GtOperator,
                                             interval: ScanInterval {
                                                 start_line: 22,
                                                 end_line: 22,
                                                 start_column: 8,
-                                                end_column: 19,
-                                            },
+                                                end_column: 19
+                                            }
                                         },
                                         AstNode {
                                             children: vec![AstNode {
@@ -2614,142 +2758,153 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
                                                             original: "gcd".to_string(),
                                                             lower_case: "gcd".to_string(),
+                                                            symbol_index: 0
                                                         },
                                                         interval: ScanInterval {
                                                             start_line: 23,
                                                             end_line: 23,
                                                             start_column: 16,
-                                                            end_column: 19,
-                                                        },
+                                                            end_column: 19
+                                                        }
                                                     },
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
                                                             original: "pair".to_string(),
                                                             lower_case: "pair".to_string(),
+                                                            symbol_index: 0
                                                         },
                                                         interval: ScanInterval {
                                                             start_line: 23,
                                                             end_line: 23,
                                                             start_column: 20,
-                                                            end_column: 24,
-                                                        },
+                                                            end_column: 24
+                                                        }
                                                     },
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Identifier {
-                                                            symbol_index: 0,
                                                             original: "result".to_string(),
                                                             lower_case: "result".to_string(),
+                                                            symbol_index: 0
                                                         },
                                                         interval: ScanInterval {
                                                             start_line: 23,
                                                             end_line: 23,
                                                             start_column: 26,
-                                                            end_column: 32,
-                                                        },
-                                                    },
+                                                            end_column: 32
+                                                        }
+                                                    }
                                                 ],
                                                 kind: AstNodeKind::CallStatement,
                                                 interval: ScanInterval {
                                                     start_line: 23,
                                                     end_line: 23,
                                                     start_column: 16,
-                                                    end_column: 32,
-                                                },
-                                            },],
+                                                    end_column: 32
+                                                }
+                                            }],
                                             kind: AstNodeKind::ReturnStatement,
                                             interval: ScanInterval {
                                                 start_line: 23,
                                                 end_line: 23,
                                                 start_column: 9,
-                                                end_column: 32,
-                                            },
+                                                end_column: 32
+                                            }
                                         },
                                         AstNode {
                                             children: vec![
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Identifier {
-                                                        symbol_index: 0,
                                                         original: "result".to_string(),
                                                         lower_case: "result".to_string(),
+                                                        symbol_index: 0
                                                     },
                                                     interval: ScanInterval {
                                                         start_line: 25,
                                                         end_line: 25,
                                                         start_column: 9,
-                                                        end_column: 15,
-                                                    },
+                                                        end_column: 15
+                                                    }
                                                 },
                                                 AstNode {
-                                                    children: vec![AstNode {
-                                                        children: vec![],
-                                                        kind: AstNodeKind::Literal {
-                                                            literal_type: TypeName::Primitive {
-                                                                primitive_type:
-                                                                    PrimitiveTypeName::Integer,
+                                                    children: vec![
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Identifier {
+                                                                original: "pair".to_string(),
+                                                                lower_case: "pair".to_string(),
+                                                                symbol_index: 0
                                                             },
-                                                            value: "0".to_string(),
+                                                            interval: ScanInterval {
+                                                                start_line: 25,
+                                                                end_line: 25,
+                                                                start_column: 19,
+                                                                end_column: 23
+                                                            }
                                                         },
-                                                        interval: ScanInterval {
-                                                            start_line: 25,
-                                                            end_line: 25,
-                                                            start_column: 24,
-                                                            end_column: 25,
-                                                        },
-                                                    },],
-                                                    kind: AstNodeKind::Identifier {
-                                                        symbol_index: 0,
-                                                        original: "pair".to_string(),
-                                                        lower_case: "pair".to_string(),
-                                                    },
+                                                        AstNode {
+                                                            children: vec![],
+                                                            kind: AstNodeKind::Literal {
+                                                                literal_type: TypeName::Primitive {
+                                                                    primitive_type: PrimitiveTypeName::Integer
+                                                                },
+                                                                value: "0".to_string()
+                                                            },
+                                                            interval: ScanInterval {
+                                                                start_line: 25,
+                                                                end_line: 25,
+                                                                start_column: 24,
+                                                                end_column: 25
+                                                            }
+                                                        }
+                                                    ],
+                                                    kind: AstNodeKind::IndexOperator,
                                                     interval: ScanInterval {
                                                         start_line: 25,
                                                         end_line: 25,
                                                         start_column: 19,
-                                                        end_column: 26,
-                                                    },
-                                                },
+                                                        end_column: 26
+                                                    }
+                                                }
                                             ],
                                             kind: AstNodeKind::AssignmentStatement,
                                             interval: ScanInterval {
                                                 start_line: 25,
                                                 end_line: 25,
                                                 start_column: 9,
-                                                end_column: 26,
-                                            },
-                                        },
+                                                end_column: 26
+                                            }
+                                        }
                                     ],
                                     kind: AstNodeKind::IfStatement,
                                     interval: ScanInterval {
                                         start_line: 22,
                                         end_line: 25,
                                         start_column: 5,
-                                        end_column: 26,
-                                    },
-                                },
+                                        end_column: 26
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::Block,
                             interval: ScanInterval {
                                 start_line: 14,
                                 end_line: 27,
                                 start_column: 1,
-                                end_column: 4,
-                            },
-                        },
+                                end_column: 4
+                            }
+                        }
                     ],
                     kind: AstNodeKind::Procedure,
                     interval: ScanInterval {
                         start_line: 13,
                         end_line: 27,
                         start_column: 1,
-                        end_column: 5,
-                    },
+                        end_column: 5
+                    }
                 },
                 AstNode {
                     children: vec![
@@ -2758,308 +2913,332 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 30,
                                         end_line: 30,
                                         start_column: 9,
-                                        end_column: 13,
-                                    },
+                                        end_column: 13
+                                    }
                                 },
                                 AstNode {
                                     children: vec![AstNode {
                                         children: vec![],
                                         kind: AstNodeKind::Literal {
                                             literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer,
+                                                primitive_type: PrimitiveTypeName::Integer
                                             },
-                                            value: "2".to_string(),
+                                            value: "2".to_string()
                                         },
                                         interval: ScanInterval {
                                             start_line: 30,
                                             end_line: 30,
                                             start_column: 21,
-                                            end_column: 22,
-                                        },
-                                    },],
+                                            end_column: 22
+                                        }
+                                    }],
                                     kind: AstNodeKind::Type {
                                         type_name: TypeName::SizedArray {
-                                            primitive_type: PrimitiveTypeName::Integer,
-                                        },
+                                            primitive_type: PrimitiveTypeName::Integer
+                                        }
                                     },
                                     interval: ScanInterval {
                                         start_line: 30,
                                         end_line: 30,
                                         start_column: 15,
-                                        end_column: 26,
-                                    },
-                                },
+                                        end_column: 26
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::VariableDeclaration,
                             interval: ScanInterval {
                                 start_line: 30,
                                 end_line: 30,
                                 start_column: 5,
-                                end_column: 26,
-                            },
+                                end_column: 26
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
-                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 31,
                                         end_line: 31,
                                         start_column: 5,
-                                        end_column: 9,
-                                    },
+                                        end_column: 9
+                                    }
                                 },
                                 AstNode {
-                                    children: vec![AstNode {
-                                        children: vec![],
-                                        kind: AstNodeKind::Literal {
-                                            literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer,
+                                    children: vec![
+                                        AstNode {
+                                            children: vec![],
+                                            kind: AstNodeKind::Identifier {
+                                                original: "pair".to_string(),
+                                                lower_case: "pair".to_string(),
+                                                symbol_index: 0
                                             },
-                                            value: "0".to_string(),
+                                            interval: ScanInterval {
+                                                start_line: 31,
+                                                end_line: 31,
+                                                start_column: 10,
+                                                end_column: 14
+                                            }
                                         },
-                                        interval: ScanInterval {
-                                            start_line: 31,
-                                            end_line: 31,
-                                            start_column: 15,
-                                            end_column: 16,
-                                        },
-                                    },],
-                                    kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
-                                        original: "pair".to_string(),
-                                        lower_case: "pair".to_string(),
-                                    },
+                                        AstNode {
+                                            children: vec![],
+                                            kind: AstNodeKind::Literal {
+                                                literal_type: TypeName::Primitive {
+                                                    primitive_type: PrimitiveTypeName::Integer
+                                                },
+                                                value: "0".to_string()
+                                            },
+                                            interval: ScanInterval {
+                                                start_line: 31,
+                                                end_line: 31,
+                                                start_column: 15,
+                                                end_column: 16
+                                            }
+                                        }
+                                    ],
+                                    kind: AstNodeKind::IndexOperator,
                                     interval: ScanInterval {
                                         start_line: 31,
                                         end_line: 31,
                                         start_column: 10,
-                                        end_column: 17,
-                                    },
-                                },
+                                        end_column: 17
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::CallStatement,
                             interval: ScanInterval {
                                 start_line: 31,
                                 end_line: 31,
                                 start_column: 5,
-                                end_column: 17,
-                            },
+                                end_column: 17
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
-                                        symbol_index: 0,
                                         original: "read".to_string(),
                                         lower_case: "read".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 32,
                                         end_line: 32,
                                         start_column: 5,
-                                        end_column: 9,
-                                    },
+                                        end_column: 9
+                                    }
                                 },
                                 AstNode {
-                                    children: vec![AstNode {
-                                        children: vec![],
-                                        kind: AstNodeKind::Literal {
-                                            literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer,
+                                    children: vec![
+                                        AstNode {
+                                            children: vec![],
+                                            kind: AstNodeKind::Identifier {
+                                                original: "pair".to_string(),
+                                                lower_case: "pair".to_string(),
+                                                symbol_index: 0
                                             },
-                                            value: "1".to_string(),
+                                            interval: ScanInterval {
+                                                start_line: 32,
+                                                end_line: 32,
+                                                start_column: 10,
+                                                end_column: 14
+                                            }
                                         },
-                                        interval: ScanInterval {
-                                            start_line: 32,
-                                            end_line: 32,
-                                            start_column: 15,
-                                            end_column: 16,
-                                        },
-                                    },],
-                                    kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
-                                        original: "pair".to_string(),
-                                        lower_case: "pair".to_string(),
-                                    },
+                                        AstNode {
+                                            children: vec![],
+                                            kind: AstNodeKind::Literal {
+                                                literal_type: TypeName::Primitive {
+                                                    primitive_type: PrimitiveTypeName::Integer
+                                                },
+                                                value: "1".to_string()
+                                            },
+                                            interval: ScanInterval {
+                                                start_line: 32,
+                                                end_line: 32,
+                                                start_column: 15,
+                                                end_column: 16
+                                            }
+                                        }
+                                    ],
+                                    kind: AstNodeKind::IndexOperator,
                                     interval: ScanInterval {
                                         start_line: 32,
                                         end_line: 32,
                                         start_column: 10,
-                                        end_column: 17,
-                                    },
-                                },
+                                        end_column: 17
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::CallStatement,
                             interval: ScanInterval {
                                 start_line: 32,
                                 end_line: 32,
                                 start_column: 5,
-                                end_column: 17,
-                            },
+                                end_column: 17
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 34,
                                         end_line: 34,
                                         start_column: 9,
-                                        end_column: 12,
-                                    },
+                                        end_column: 12
+                                    }
                                 },
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Type {
                                         type_name: TypeName::Primitive {
-                                            primitive_type: PrimitiveTypeName::Integer,
-                                        },
+                                            primitive_type: PrimitiveTypeName::Integer
+                                        }
                                     },
                                     interval: ScanInterval {
                                         start_line: 34,
                                         end_line: 34,
                                         start_column: 14,
-                                        end_column: 21,
-                                    },
-                                },
+                                        end_column: 21
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::VariableDeclaration,
                             interval: ScanInterval {
                                 start_line: 34,
                                 end_line: 34,
                                 start_column: 5,
-                                end_column: 21,
-                            },
+                                end_column: 21
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 35,
                                         end_line: 35,
                                         start_column: 5,
-                                        end_column: 8,
-                                    },
+                                        end_column: 8
+                                    }
                                 },
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "pair".to_string(),
                                         lower_case: "pair".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 35,
                                         end_line: 35,
                                         start_column: 9,
-                                        end_column: 13,
-                                    },
+                                        end_column: 13
+                                    }
                                 },
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 35,
                                         end_line: 35,
                                         start_column: 15,
-                                        end_column: 18,
-                                    },
-                                },
+                                        end_column: 18
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::CallStatement,
                             interval: ScanInterval {
                                 start_line: 35,
                                 end_line: 35,
                                 start_column: 5,
-                                end_column: 18,
-                            },
+                                end_column: 18
+                            }
                         },
                         AstNode {
                             children: vec![
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::PredefinedIdentifier {
-                                        symbol_index: 0,
                                         original: "writeln".to_string(),
                                         lower_case: "writeln".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 36,
                                         end_line: 36,
                                         start_column: 5,
-                                        end_column: 12,
-                                    },
+                                        end_column: 12
+                                    }
                                 },
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        symbol_index: 0,
                                         original: "gcd".to_string(),
                                         lower_case: "gcd".to_string(),
+                                        symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 36,
                                         end_line: 36,
                                         start_column: 13,
-                                        end_column: 16,
-                                    },
-                                },
+                                        end_column: 16
+                                    }
+                                }
                             ],
                             kind: AstNodeKind::CallStatement,
                             interval: ScanInterval {
                                 start_line: 36,
                                 end_line: 36,
                                 start_column: 5,
-                                end_column: 16,
-                            },
-                        },
+                                end_column: 16
+                            }
+                        }
                     ],
                     kind: AstNodeKind::Block,
                     interval: ScanInterval {
                         start_line: 29,
                         end_line: 37,
                         start_column: 1,
-                        end_column: 4,
-                    },
-                },
+                        end_column: 4
+                    }
+                }
             ],
             kind: AstNodeKind::Program,
             interval: ScanInterval {
                 start_line: 1,
                 end_line: 37,
                 start_column: 1,
-                end_column: 5,
-            },
+                end_column: 5
+            }
         }
     );
 }

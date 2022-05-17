@@ -40,14 +40,19 @@ pub enum SymbolType {
     BuiltinFunction,
     /// The name of the program.
     Program,
+    /// The empty type, returned by procedures.
+    Empty,
 }
 
 /// The type of a function.
-/// It is the list of its argument types plus the (optional) return type.
+/// It is the list of its parameter types plus the (optional) return type.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FunctionType {
-    parameter_types: Vec<TypeName>,
-    return_type: Option<TypeName>,
+    /// The list of its parameter types.
+    pub parameter_types: Vec<TypeName>,
+    /// The optional return type.
+    /// This is `None` for a procedure, and `Some(_)` for a function.
+    pub return_type: Option<TypeName>,
 }
 
 /// The type of a variable.
@@ -55,8 +60,9 @@ pub struct FunctionType {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct VariableSymbolType {
     /// `true` if the variable is a var-parameter.
-    var: bool,
-    variable_type: TypeName,
+    pub var: bool,
+    /// The type of the value of the variable.
+    pub variable_type: TypeName,
 }
 
 impl SymbolTable {
@@ -92,6 +98,19 @@ impl SymbolTable {
     /// This skips the "null"-symbol at position zero, and starts from position one instead.
     pub fn iter(&self) -> impl Iterator<Item = &Symbol> {
         self.symbols.iter().skip(1)
+    }
+
+    pub fn get(&self, index: usize) -> Option<&Symbol> {
+        if index == 0 {
+            return None;
+        }
+        self.symbols.get(index)
+    }
+}
+
+impl Symbol {
+    pub fn symbol_type(&self) -> &SymbolType {
+        &self.symbol_type
     }
 }
 
@@ -262,7 +281,7 @@ fn build_symbol_table_recursively(
         | AssertStatement | IfStatement | WhileStatement | EqOperator | NeqOperator
         | LtOperator | LeqOperator | GeqOperator | GtOperator | NegOperator | AddOperator
         | SubOperator | OrOperator | NotOperator | MulOperator | DivOperator | ModOperator
-        | AndOperator | DotOperator => {
+        | AndOperator | DotOperator | IndexOperator => {
             for child in ast.children_mut().iter_mut() {
                 build_symbol_table_recursively(child, symbol_table, map_stack)?;
             }

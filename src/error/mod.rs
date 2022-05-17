@@ -1,4 +1,6 @@
+use crate::parser::AstNode;
 use crate::scanner::{ScanInterval, Token};
+use crate::symbol_table::SymbolType;
 
 /// A shorthand to a `Result` type with the error type of the compiler.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -55,6 +57,9 @@ pub enum ParserErrorKind {
     /// Expected an identifier or predefined identifier, but found something else.
     ExpectedIdentifier { found: Token },
 
+    /// Expected the predefined identifier `size`, but found something else.
+    ExpectedSize { found: AstNode },
+
     /// Expected a type identifier, but found a different identifier.
     ExpectedTypeName { found: Token },
 
@@ -91,6 +96,12 @@ pub enum StaticErrorKind {
     UndeclaredSymbol {
         lower_case: String,
         original: String,
+    },
+
+    /// A type was found that was not expected.
+    TypeMismatch {
+        expected: SymbolType,
+        actual: SymbolType,
     },
 }
 
