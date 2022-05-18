@@ -1,5 +1,5 @@
 use crate::error::{static_error, Result, StaticErrorKind};
-use crate::parser::{AstNode, AstNodeKind, TypeName};
+use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
 use log::trace;
 use std::collections::HashMap;
 use std::hash::Hash;
@@ -78,6 +78,15 @@ impl SymbolTable {
         };
         result.add_symbol("read".to_string(), SymbolType::BuiltinFunction);
         result.add_symbol("writeln".to_string(), SymbolType::BuiltinFunction);
+        result.add_symbol(
+            "assert".to_string(),
+            SymbolType::Function(FunctionType {
+                parameter_types: vec![TypeName::Primitive {
+                    primitive_type: PrimitiveTypeName::Boolean,
+                }],
+                return_type: None,
+            }),
+        );
         result
     }
 

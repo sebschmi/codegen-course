@@ -1,4 +1,4 @@
-use crate::parser::AstNode;
+use crate::parser::{AstNode, AstNodeKind};
 use crate::scanner::{ScanInterval, Token};
 use crate::symbol_table::SymbolType;
 
@@ -103,6 +103,36 @@ pub enum StaticErrorKind {
         expected: SymbolType,
         actual: SymbolType,
     },
+
+    /// The empty type was found, but a different type was expected.
+    UnexpectedEmptyType,
+
+    /// Expected a function type, but found something else.
+    ExpectedFunction { actual: SymbolType },
+
+    /// Expected a variable type, but found something else.
+    ExpectedVariable { actual: SymbolType },
+
+    /// Expected a primitive variable type, but found something else.
+    ExpectedPrimitiveType { actual: SymbolType },
+
+    /// Expected a primitive numeric variable type, but found something else.
+    ExpectedNumericType { actual: SymbolType },
+
+    /// Expected a primitive numeric or string variable type, but found something else.
+    ExpectedNumericOrStringType { actual: SymbolType },
+
+    /// Expected an array type, but found something else.
+    ExpectedArray { actual: SymbolType },
+
+    /// Expected an integer type, but found something else.
+    ExpectedInteger { actual: SymbolType },
+
+    /// A function or procedure is called with a wrong number of arguments.
+    WrongArgumentCount { expected: usize, actual: usize },
+
+    /// Expected an identifier or predefined identifier, but found something else.
+    ExpectedIdentifier { actual: AstNodeKind },
 }
 
 /// A convenience function for creating static errors.

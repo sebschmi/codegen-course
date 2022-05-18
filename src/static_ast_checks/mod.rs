@@ -1,6 +1,6 @@
 use crate::error::{static_error, Result, StaticErrorKind};
-use crate::parser::{AstNode, AstNodeKind};
-use crate::symbol_table::{SymbolTable, SymbolType, VariableSymbolType};
+use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
+use crate::symbol_table::{FunctionType, SymbolTable, SymbolType, VariableSymbolType};
 
 pub fn type_check(ast: &AstNode, symbol_table: &SymbolTable) -> Result<()> {
     type_check_recursively(ast, symbol_table).map(|_| ())
@@ -39,7 +39,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
-                        expected: expected_return_type.clone(),
+                        expected: expected_return_type,
                         actual: return_type,
                     },
                 ));
@@ -76,79 +76,471 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             return_type
         }
         AssignmentStatement => {
-            todo!()
+            let assignee_type = type_check_recursively(&ast.children()[0], symbol_table)?;
+            let value_type = type_check_recursively(&ast.children()[1], symbol_table)?;
+            if let (Some(assignee_type), Some(value_type)) = (assignee_type, value_type) {
+                if assignee_type != value_type {
+                    return Err(static_error(
+                        ast.interval().clone(),
+                        StaticErrorKind::TypeMismatch {
+                            expected: assignee_type,
+                            actual: value_type,
+                        },
+                    ));
+                }
+            } else {
+                return Err(static_error(
+                    ast.interval().clone(),
+                    StaticErrorKind::UnexpectedEmptyType,
+                ));
+            }
+            None
         }
-        CallStatement => {
-            todo!()
+        CallStatement | AssertStatement => {
+            let symbol_index = ast.children()[0].get_symbol_index().unwrap();
+            let symbol = symbol_table.get(symbol_index).unwrap();
+            if let SymbolType::Function(FunctionType {
+                parameter_types,
+                return_type,
+            }) = symbol.symbol_type()
+            {
+                let argument_count = ast.children().len() - 1;
+                if argument_count != parameter_types.len() {
+                    return Err(static_error(
+                        ast.interval().clone(),
+                        StaticErrorKind::WrongArgumentCount {
+                            expected: parameter_types.len(),
+                            actual: argument_count,
+                        },
+                    ));
+                }
+
+                for (child, expected_type) in
+                    ast.children().iter().skip(1).zip(parameter_types.iter())
+                {
+                    let expected_type = SymbolType::Variable(VariableSymbolType {
+                        var: false,
+                        variable_type: expected_type.clone(),
+                    });
+                    let child_type = type_check_recursively(child, symbol_table)?;
+                    if let Some(child_type) = child_type {
+                        if expected_type != child_type {
+                            return Err(static_error(
+                                ast.interval().clone(),
+                                StaticErrorKind::TypeMismatch {
+                                    expected: expected_type,
+                                    actual: child_type,
+                                },
+                            ));
+                        }
+                    } else {
+                        return Err(static_error(
+                            ast.interval().clone(),
+                            StaticErrorKind::UnexpectedEmptyType,
+                        ));
+                    }
+                }
+
+                return_type.clone().map(|type_name| {
+                    SymbolType::Variable(VariableSymbolType {
+                        var: false,
+                        variable_type: type_name,
+                    })
+                })
+            } else {
+                return Err(static_error(
+                    ast.interval().clone(),
+                    StaticErrorKind::ExpectedFunction {
+                        actual: symbol.symbol_type().clone(),
+                    },
+                ));
+            }
         }
         ReturnStatement => {
-            todo!()
+            let result = type_check_recursively(&ast.children()[0], symbol_table)?;
+            if result.is_none() {
+                // return statements return a special marker type if they return nothing,
+                // such that in the block type checking logic an error can be raised if
+                // a different type than nothing was expected.
+                Some(SymbolType::Empty)
+            } else {
+                result
+            }
         }
         ReadStatement => {
-            todo!()
+            for child in ast.children().iter().skip(1) {
+                match child.kind() {
+                    Identifier { symbol_index, .. } | PredefinedIdentifier { symbol_index, .. } => {
+                        let identifier_type =
+                            symbol_table.get(*symbol_index).unwrap().symbol_type();
+                        if let SymbolType::Variable(_) = identifier_type {
+                            /* ok */
+                        } else {
+                            return Err(static_error(
+                                child.interval().clone(),
+                                StaticErrorKind::ExpectedVariable {
+                                    actual: identifier_type.clone(),
+                                },
+                            ));
+                        }
+                    }
+                    other => {
+                        return Err(static_error(
+                            child.interval().clone(),
+                            StaticErrorKind::ExpectedIdentifier {
+                                actual: other.clone(),
+                            },
+                        ))
+                    }
+                }
+            }
+            None
         }
         WriteStatement => {
-            todo!()
+            for child in ast.children().iter().skip(1) {
+                let child_type = type_check_recursively(child, symbol_table)?;
+                if let Some(SymbolType::Variable(_)) = child_type {
+                    /* ok */
+                } else {
+                    return Err(static_error(
+                        ast.interval().clone(),
+                        StaticErrorKind::UnexpectedEmptyType,
+                    ));
+                }
+            }
+            None
         }
-        AssertStatement => {
-            todo!()
+        IfStatement | WhileStatement => {
+            let condition_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type:
+                    TypeName::Primitive {
+                        primitive_type: PrimitiveTypeName::Boolean,
+                    },
+                ..
+            }) = condition_type
+            {
+                /* ok */
+                None
+            } else {
+                // expecting a non-var type here, but we actually do not care if it is var or not
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: SymbolType::Variable(VariableSymbolType {
+                            var: false,
+                            variable_type: TypeName::Primitive {
+                                primitive_type: PrimitiveTypeName::Boolean,
+                            },
+                        }),
+                        actual: condition_type,
+                    },
+                ));
+            }
         }
-        IfStatement => {
-            todo!()
-        }
-        WhileStatement => {
-            todo!()
-        }
-        EqOperator => {
-            todo!()
-        }
-        NeqOperator => {
-            todo!()
-        }
-        LtOperator => {
-            todo!()
-        }
-        LeqOperator => {
-            todo!()
-        }
-        GeqOperator => {
-            todo!()
-        }
-        GtOperator => {
-            todo!()
+        EqOperator | NeqOperator | LtOperator | LeqOperator | GeqOperator | GtOperator => {
+            let first_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            let second_type = type_check_recursively(&ast.children()[1], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type: TypeName::Primitive { .. },
+                ..
+            }) = &first_type
+            {
+                /* ok */
+            } else {
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
+                ));
+            }
+            if first_type != second_type {
+                return Err(static_error(
+                    ast.interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: first_type,
+                        actual: second_type,
+                    },
+                ));
+            }
+            Some(SymbolType::Variable(VariableSymbolType {
+                var: false,
+                variable_type: TypeName::Primitive {
+                    primitive_type: PrimitiveTypeName::Boolean,
+                },
+            }))
         }
         NegOperator => {
-            todo!()
+            let child_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type: TypeName::Primitive { primitive_type },
+                ..
+            }) = &child_type
+            {
+                if primitive_type == &PrimitiveTypeName::Integer
+                    || primitive_type == &PrimitiveTypeName::Real
+                {
+                    /* ok */
+                } else {
+                    return Err(static_error(
+                        ast.children()[0].interval().clone(),
+                        StaticErrorKind::ExpectedNumericType { actual: child_type },
+                    ));
+                }
+            } else {
+                // expecting a non-var type here, but we actually do not care if it is var or not
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::ExpectedNumericType { actual: child_type },
+                ));
+            }
+            Some(child_type)
         }
-        AddOperator => {
-            todo!()
+        AddOperator | SubOperator | MulOperator | DivOperator => {
+            let first_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            let second_type = type_check_recursively(&ast.children()[1], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type: TypeName::Primitive { primitive_type },
+                ..
+            }) = &first_type
+            {
+                if primitive_type == &PrimitiveTypeName::Integer
+                    || primitive_type == &PrimitiveTypeName::Real
+                {
+                    /* ok */
+                } else if ast.kind() == &AddOperator {
+                    if primitive_type == &PrimitiveTypeName::String {
+                        /* ok */
+                    } else {
+                        return Err(static_error(
+                            ast.children()[0].interval().clone(),
+                            StaticErrorKind::ExpectedNumericOrStringType { actual: first_type },
+                        ));
+                    }
+                } else {
+                    return Err(static_error(
+                        ast.children()[0].interval().clone(),
+                        StaticErrorKind::ExpectedNumericType { actual: first_type },
+                    ));
+                }
+            } else {
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
+                ));
+            }
+            if first_type != second_type {
+                return Err(static_error(
+                    ast.interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: first_type,
+                        actual: second_type,
+                    },
+                ));
+            }
+            Some(first_type)
         }
-        SubOperator => {
-            todo!()
-        }
-        OrOperator => {
-            todo!()
+        OrOperator | AndOperator => {
+            let first_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            let second_type = type_check_recursively(&ast.children()[1], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type:
+                    TypeName::Primitive {
+                        primitive_type: PrimitiveTypeName::Boolean,
+                    },
+                ..
+            }) = &first_type
+            {
+                /* ok */
+            } else {
+                // expecting a non-var type here, but we actually do not care if it is var or not
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: SymbolType::Variable(VariableSymbolType {
+                            variable_type: TypeName::Primitive {
+                                primitive_type: PrimitiveTypeName::Boolean,
+                            },
+                            var: false,
+                        }),
+                        actual: first_type,
+                    },
+                ));
+            }
+            if first_type != second_type {
+                return Err(static_error(
+                    ast.interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: first_type,
+                        actual: second_type,
+                    },
+                ));
+            }
+            Some(first_type)
         }
         NotOperator => {
-            todo!()
-        }
-        MulOperator => {
-            todo!()
-        }
-        DivOperator => {
-            todo!()
+            let child_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type:
+                    TypeName::Primitive {
+                        primitive_type: PrimitiveTypeName::Boolean,
+                    },
+                ..
+            }) = &child_type
+            {
+                /* ok */
+            } else {
+                // expecting a non-var type here, but we actually do not care if it is var or not
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: SymbolType::Variable(VariableSymbolType {
+                            variable_type: TypeName::Primitive {
+                                primitive_type: PrimitiveTypeName::Boolean,
+                            },
+                            var: false,
+                        }),
+                        actual: child_type,
+                    },
+                ));
+            }
+            Some(child_type)
         }
         ModOperator => {
-            todo!()
-        }
-        AndOperator => {
-            todo!()
+            let first_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            let second_type = type_check_recursively(&ast.children()[1], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type:
+                    TypeName::Primitive {
+                        primitive_type: PrimitiveTypeName::Integer,
+                    },
+                ..
+            }) = &first_type
+            {
+                /* ok */
+            } else {
+                // expecting a non-var type here, but we actually do not care if it is var or not
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: SymbolType::Variable(VariableSymbolType {
+                            variable_type: TypeName::Primitive {
+                                primitive_type: PrimitiveTypeName::Integer,
+                            },
+                            var: false,
+                        }),
+                        actual: first_type,
+                    },
+                ));
+            }
+            if first_type != second_type {
+                return Err(static_error(
+                    ast.interval().clone(),
+                    StaticErrorKind::TypeMismatch {
+                        expected: first_type,
+                        actual: second_type,
+                    },
+                ));
+            }
+            Some(first_type)
         }
         DotOperator => {
-            todo!()
+            let child_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            if let SymbolType::Variable(VariableSymbolType { variable_type, .. }) = &child_type {
+                match variable_type {
+                    TypeName::UnsizedArray { .. } | TypeName::SizedArray { .. } => { /* ok */ }
+                    other => {
+                        // expecting a non-var type here, but we actually do not care if it is var or not
+                        return Err(static_error(
+                            ast.children()[0].interval().clone(),
+                            StaticErrorKind::ExpectedArray {
+                                actual: SymbolType::Variable(VariableSymbolType {
+                                    variable_type: other.clone(),
+                                    var: false,
+                                }),
+                            },
+                        ));
+                    }
+                }
+                /* ok */
+            } else {
+                // expecting a non-var type here, but we actually do not care if it is var or not
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::ExpectedArray { actual: child_type },
+                ));
+            }
+            Some(SymbolType::Variable(VariableSymbolType {
+                var: false,
+                variable_type: TypeName::Primitive {
+                    primitive_type: PrimitiveTypeName::Integer,
+                },
+            }))
         }
         IndexOperator => {
-            todo!()
+            let array_type = type_check_recursively(&ast.children()[0], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            let index_type = type_check_recursively(&ast.children()[1], symbol_table)?
+                .unwrap_or(SymbolType::Empty);
+            let return_type = if let SymbolType::Variable(VariableSymbolType {
+                variable_type,
+                ..
+            }) = array_type
+            {
+                match variable_type {
+                    TypeName::UnsizedArray { primitive_type }
+                    | TypeName::SizedArray { primitive_type } => {
+                        /* ok */
+                        SymbolType::Variable(VariableSymbolType {
+                            var: false,
+                            variable_type: TypeName::Primitive { primitive_type },
+                        })
+                    }
+                    other => {
+                        return Err(static_error(
+                            ast.children()[0].interval().clone(),
+                            StaticErrorKind::ExpectedArray {
+                                actual: SymbolType::Variable(VariableSymbolType {
+                                    variable_type: other,
+                                    var: false,
+                                }),
+                            },
+                        ));
+                    }
+                }
+            } else {
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::ExpectedArray { actual: array_type },
+                ));
+            };
+            if let SymbolType::Variable(VariableSymbolType {
+                variable_type:
+                    TypeName::Primitive {
+                        primitive_type: PrimitiveTypeName::Integer,
+                    },
+                ..
+            }) = &index_type
+            {
+                /* ok */
+            } else {
+                return Err(static_error(
+                    ast.children()[0].interval().clone(),
+                    StaticErrorKind::ExpectedInteger { actual: index_type },
+                ));
+            }
+            Some(return_type)
         }
         Literal { literal_type, .. } => Some(SymbolType::Variable(VariableSymbolType {
             var: false,

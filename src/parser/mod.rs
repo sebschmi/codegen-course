@@ -26,7 +26,7 @@ pub struct AstNode {
 /// The kind of an AST node.
 /// This can be an operator, function, etc.
 #[allow(missing_docs)]
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum AstNodeKind {
     /// The root node.
     Program,
@@ -1138,7 +1138,7 @@ fn parse_identifier_usage(
         None => return Err(Error::UnexpectedEndOfInput),
     };
 
-    if let Some(_) = optional_token(scanner, Token::OpenBracket)? {
+    if optional_token(scanner, Token::OpenBracket)?.is_some() {
         let index_expression = parse_expression(scanner)?;
         let end_interval = expect_token(scanner, Token::CloseBracket)?;
         let interval = result.interval.extend_clone(&end_interval);
