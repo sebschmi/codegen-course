@@ -52,11 +52,21 @@ end.
                 },
                 Symbol {
                     index: 3,
+                    name: "assert".to_string(),
+                    symbol_type: SymbolType::Function(FunctionType {
+                        parameter_types: vec![TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Boolean
+                        }],
+                        return_type: None
+                    }),
+                },
+                Symbol {
+                    index: 4,
                     name: "gcd".to_string(),
                     symbol_type: SymbolType::Program,
                 },
                 Symbol {
-                    index: 4,
+                    index: 5,
                     name: "n1".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -66,7 +76,7 @@ end.
                     },),
                 },
                 Symbol {
-                    index: 5,
+                    index: 6,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -76,7 +86,7 @@ end.
                     },),
                 },
                 Symbol {
-                    index: 6,
+                    index: 7,
                     name: "tmp".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -86,7 +96,7 @@ end.
                     },),
                 },
                 Symbol {
-                    index: 7,
+                    index: 8,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -162,11 +172,21 @@ end.";
                 },
                 Symbol {
                     index: 3,
+                    name: "assert".to_string(),
+                    symbol_type: SymbolType::Function(FunctionType {
+                        parameter_types: vec![TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Boolean
+                        }],
+                        return_type: None
+                    }),
+                },
+                Symbol {
+                    index: 4,
                     name: "gcd2".to_string(),
                     symbol_type: SymbolType::Program,
                 },
                 Symbol {
-                    index: 4,
+                    index: 5,
                     name: "gcd".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
                         parameter_types: vec![
@@ -183,7 +203,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 5,
+                    index: 6,
                     name: "n1".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -193,18 +213,8 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 6,
-                    name: "n2".to_string(),
-                    symbol_type: SymbolType::Variable(VariableSymbolType {
-                        var: false,
-                        variable_type: TypeName::Primitive {
-                            primitive_type: PrimitiveTypeName::Integer,
-                        },
-                    },),
-                },
-                Symbol {
                     index: 7,
-                    name: "new".to_string(),
+                    name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
                         variable_type: TypeName::Primitive {
@@ -224,7 +234,7 @@ end.";
                 },
                 Symbol {
                     index: 9,
-                    name: "n1".to_string(),
+                    name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
                         variable_type: TypeName::Primitive {
@@ -234,6 +244,16 @@ end.";
                 },
                 Symbol {
                     index: 10,
+                    name: "n1".to_string(),
+                    symbol_type: SymbolType::Variable(VariableSymbolType {
+                        var: false,
+                        variable_type: TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Integer,
+                        },
+                    },),
+                },
+                Symbol {
+                    index: 11,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -312,11 +332,21 @@ end.";
                 },
                 Symbol {
                     index: 3,
+                    name: "assert".to_string(),
+                    symbol_type: SymbolType::Function(FunctionType {
+                        parameter_types: vec![TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Boolean
+                        }],
+                        return_type: None
+                    }),
+                },
+                Symbol {
+                    index: 4,
                     name: "gcd3".to_string(),
                     symbol_type: SymbolType::Program,
                 },
                 Symbol {
-                    index: 4,
+                    index: 5,
                     name: "sort_pair_descending".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
                         parameter_types: vec![TypeName::SizedArray {
@@ -326,7 +356,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 5,
+                    index: 6,
                     name: "pair".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -336,7 +366,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 6,
+                    index: 7,
                     name: "tmp".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -346,7 +376,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 7,
+                    index: 8,
                     name: "gcd".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
                         parameter_types: vec![
@@ -361,7 +391,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 8,
+                    index: 9,
                     name: "pair".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -371,7 +401,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 9,
+                    index: 10,
                     name: "result".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: true,
@@ -381,7 +411,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 10,
+                    index: 11,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -391,7 +421,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 11,
+                    index: 12,
                     name: "pair".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
@@ -401,7 +431,7 @@ end.";
                     },),
                 },
                 Symbol {
-                    index: 12,
+                    index: 13,
                     name: "gcd".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
