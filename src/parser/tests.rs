@@ -134,7 +134,7 @@ end.
                                     },
                                 },
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::ReadStatement,
                             interval: ScanInterval {
                                 start_line: 4,
                                 end_line: 4,
@@ -173,7 +173,7 @@ end.
                                     },
                                 },
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::ReadStatement,
                             interval: ScanInterval {
                                 start_line: 5,
                                 end_line: 5,
@@ -674,7 +674,7 @@ end.
                                     },
                                 },
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::WriteStatement,
                             interval: ScanInterval {
                                 start_line: 20,
                                 end_line: 20,
@@ -1531,7 +1531,7 @@ end.";
                                     },
                                 },
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::ReadStatement,
                             interval: ScanInterval {
                                 start_line: 31,
                                 end_line: 31,
@@ -1570,7 +1570,7 @@ end.";
                                     },
                                 },
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::ReadStatement,
                             interval: ScanInterval {
                                 start_line: 32,
                                 end_line: 32,
@@ -1648,7 +1648,7 @@ end.";
                                     },
                                 },
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::WriteStatement,
                             interval: ScanInterval {
                                 start_line: 33,
                                 end_line: 33,
@@ -1712,9 +1712,9 @@ begin
     read(pair[0]);
     read(pair[1]);
 
-    var gcd: integer;
-    gcd(pair, gcd);
-    writeln(gcd);
+    var result: integer;
+    gcd(pair, result);
+    writeln(result);
 end.";
 
     initialise_logging();
@@ -3018,7 +3018,7 @@ end.";
                                     }
                                 }
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::ReadStatement,
                             interval: ScanInterval {
                                 start_line: 31,
                                 end_line: 31,
@@ -3083,7 +3083,7 @@ end.";
                                     }
                                 }
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::ReadStatement,
                             interval: ScanInterval {
                                 start_line: 32,
                                 end_line: 32,
@@ -3096,15 +3096,15 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        original: "gcd".to_string(),
-                                        lower_case: "gcd".to_string(),
+                                        original: "result".to_string(),
+                                        lower_case: "result".to_string(),
                                         symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 34,
                                         end_line: 34,
                                         start_column: 9,
-                                        end_column: 12
+                                        end_column: 15
                                     }
                                 },
                                 AstNode {
@@ -3117,8 +3117,8 @@ end.";
                                     interval: ScanInterval {
                                         start_line: 34,
                                         end_line: 34,
-                                        start_column: 14,
-                                        end_column: 21
+                                        start_column: 17,
+                                        end_column: 24
                                     }
                                 }
                             ],
@@ -3127,7 +3127,7 @@ end.";
                                 start_line: 34,
                                 end_line: 34,
                                 start_column: 5,
-                                end_column: 21
+                                end_column: 24
                             }
                         },
                         AstNode {
@@ -3163,15 +3163,15 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        original: "gcd".to_string(),
-                                        lower_case: "gcd".to_string(),
+                                        original: "result".to_string(),
+                                        lower_case: "result".to_string(),
                                         symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 35,
                                         end_line: 35,
                                         start_column: 15,
-                                        end_column: 18
+                                        end_column: 21
                                     }
                                 }
                             ],
@@ -3180,7 +3180,7 @@ end.";
                                 start_line: 35,
                                 end_line: 35,
                                 start_column: 5,
-                                end_column: 18
+                                end_column: 21
                             }
                         },
                         AstNode {
@@ -3202,24 +3202,24 @@ end.";
                                 AstNode {
                                     children: vec![],
                                     kind: AstNodeKind::Identifier {
-                                        original: "gcd".to_string(),
-                                        lower_case: "gcd".to_string(),
+                                        original: "result".to_string(),
+                                        lower_case: "result".to_string(),
                                         symbol_index: 0
                                     },
                                     interval: ScanInterval {
                                         start_line: 36,
                                         end_line: 36,
                                         start_column: 13,
-                                        end_column: 16
+                                        end_column: 19
                                     }
                                 }
                             ],
-                            kind: AstNodeKind::CallStatement,
+                            kind: AstNodeKind::WriteStatement,
                             interval: ScanInterval {
                                 start_line: 36,
                                 end_line: 36,
                                 start_column: 5,
-                                end_column: 16
+                                end_column: 19
                             }
                         }
                     ],

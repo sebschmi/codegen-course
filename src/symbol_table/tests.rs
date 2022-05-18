@@ -302,9 +302,9 @@ begin
     read(pair[0]);
     read(pair[1]);
 
-    var gcd: integer;
-    gcd(pair, gcd);
-    writeln(gcd);
+    var result: integer;
+    gcd(pair, result);
+    writeln(result);
 end.";
 
     initialise_logging();
@@ -432,7 +432,7 @@ end.";
                 },
                 Symbol {
                     index: 13,
-                    name: "gcd".to_string(),
+                    name: "result".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
                         var: false,
                         variable_type: TypeName::Primitive {

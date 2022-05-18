@@ -7,12 +7,13 @@ use crate::error::{Error, Result};
 use crate::io::ReadIterator;
 use crate::parser::build_ast;
 use crate::scanner::Scanner;
+use crate::static_ast_checks::type_check;
 use crate::symbol_table::build_symbol_table;
 use clap::Parser;
 use log::{info, LevelFilter};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Read};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU8, Ordering};
 
@@ -28,6 +29,8 @@ pub mod scanner;
 pub mod static_ast_checks;
 /// The symbol table extracted from the AST.
 pub mod symbol_table;
+#[cfg(test)]
+mod tests;
 
 /// The command line arguments used for configuring the compiler.
 #[derive(Parser)]
@@ -69,16 +72,24 @@ fn initialise_logging() {
     }
 }
 
+/// Compile the given input.
+pub fn compile(input: impl Read) -> Result<()> {
+    let input = BufReader::new(input);
+    let scanner = Scanner::new(ReadIterator::new(input))?;
+    let mut ast = build_ast(scanner)?;
+    let symbol_table = build_symbol_table(&mut ast)?;
+    type_check(&ast, &symbol_table)?;
+
+    println!("{symbol_table:#?}");
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     initialise_logging();
     let configuration = Configuration::parse();
 
-    let input = BufReader::new(File::open(&configuration.input).map_err(Error::ReadError)?);
-    let scanner = Scanner::new(ReadIterator::new(input))?;
-    let mut ast = build_ast(scanner)?;
-    let symbol_table = build_symbol_table(&mut ast)?;
-
-    println!("{symbol_table:#?}");
+    compile(File::open(&configuration.input).map_err(Error::ReadError)?)?;
 
     Ok(())
 }

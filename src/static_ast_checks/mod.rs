@@ -1,6 +1,7 @@
 use crate::error::{static_error, Result, StaticErrorKind};
 use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
 use crate::symbol_table::{FunctionType, SymbolTable, SymbolType, VariableSymbolType};
+use log::trace;
 
 pub fn type_check(ast: &AstNode, symbol_table: &SymbolTable) -> Result<()> {
     type_check_recursively(ast, symbol_table).map(|_| ())
@@ -13,6 +14,11 @@ pub fn type_check(ast: &AstNode, symbol_table: &SymbolTable) -> Result<()> {
 /// (The same holds for procedures, expecting the `Empty` return type.)
 /// This recursively means that statements return no type, except for return statements.
 fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<Option<SymbolType>> {
+    trace!(
+        "type_check_recursively {:?} {:?}",
+        ast.kind(),
+        ast.interval()
+    );
     use AstNodeKind::*;
 
     Ok(match ast.kind() {
@@ -24,18 +30,29 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
         }
         Function | Procedure => {
             // only type check the body, as the identifier and head don't need type checking
-            let return_type =
-                type_check_recursively(ast.children().last().unwrap(), symbol_table)?.unwrap();
+            let return_type = type_check_recursively(ast.children().last().unwrap(), symbol_table)?
+                // a block without return statements implicitly returns the empty type at the end
+                .unwrap_or(SymbolType::Empty);
             let expected_return_type = if ast.kind() == &Function {
-                symbol_table
+                match symbol_table
                     .get(ast.children()[0].get_symbol_index().unwrap())
                     .unwrap()
                     .symbol_type()
-                    .clone()
+                {
+                    SymbolType::Function(FunctionType {
+                        return_type: Some(return_type),
+                        ..
+                    }) => SymbolType::Variable(VariableSymbolType {
+                        var: false,
+                        variable_type: return_type.clone(),
+                    }),
+                    other => unreachable!("{other:#?}"),
+                }
             } else {
                 SymbolType::Empty
             };
-            if return_type != expected_return_type {
+            trace!("return_type: {return_type:?}; expected_return_type: {expected_return_type:?}");
+            if !return_type.equals_ignore_var(&expected_return_type) {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -54,8 +71,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             let mut return_type: Option<SymbolType> = None;
             for child in ast.children() {
                 if let Some(alternate_return_type) = type_check_recursively(child, symbol_table)? {
+                    trace!("statement_return_type: {alternate_return_type:?}");
                     if let Some(return_type) = return_type.as_ref() {
-                        if return_type != &alternate_return_type {
+                        if !return_type.equals_ignore_var(&alternate_return_type) {
                             return Err(static_error(
                                 ast.interval().clone(),
                                 StaticErrorKind::TypeMismatch {
@@ -65,21 +83,19 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                             ));
                         }
                     } else {
+                        trace!("statement_return_type: None");
                         return_type = Some(alternate_return_type);
                     }
                 }
             }
-            // a block without return statement implicitly returns the empty type
-            if return_type == None {
-                return_type = Some(SymbolType::Empty);
-            }
+            trace!("block_return_type: {return_type:?}");
             return_type
         }
         AssignmentStatement => {
             let assignee_type = type_check_recursively(&ast.children()[0], symbol_table)?;
             let value_type = type_check_recursively(&ast.children()[1], symbol_table)?;
             if let (Some(assignee_type), Some(value_type)) = (assignee_type, value_type) {
-                if assignee_type != value_type {
+                if !assignee_type.equals_ignore_var(&value_type) {
                     return Err(static_error(
                         ast.interval().clone(),
                         StaticErrorKind::TypeMismatch {
@@ -97,8 +113,10 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             None
         }
         CallStatement | AssertStatement => {
+            trace!("ast: {ast:?}");
             let symbol_index = ast.children()[0].get_symbol_index().unwrap();
             let symbol = symbol_table.get(symbol_index).unwrap();
+            trace!("function_name_symbol: {symbol:?}");
             if let SymbolType::Function(FunctionType {
                 parameter_types,
                 return_type,
@@ -124,7 +142,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     });
                     let child_type = type_check_recursively(child, symbol_table)?;
                     if let Some(child_type) = child_type {
-                        if expected_type != child_type {
+                        if !expected_type.equals_ignore_var(&child_type) {
                             return Err(static_error(
                                 ast.interval().clone(),
                                 StaticErrorKind::TypeMismatch {
@@ -158,6 +176,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
         }
         ReturnStatement => {
             let result = type_check_recursively(&ast.children()[0], symbol_table)?;
+            trace!("return_type: {result:?}");
             if result.is_none() {
                 // return statements return a special marker type if they return nothing,
                 // such that in the block type checking logic an error can be raised if
@@ -173,13 +192,31 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     Identifier { symbol_index, .. } | PredefinedIdentifier { symbol_index, .. } => {
                         let identifier_type =
                             symbol_table.get(*symbol_index).unwrap().symbol_type();
-                        if let SymbolType::Variable(_) = identifier_type {
+                        if let SymbolType::Variable(VariableSymbolType {
+                            variable_type: TypeName::Primitive { .. },
+                            ..
+                        }) = identifier_type
+                        {
+                            /* ok */
+                        } else {
+                            return Err(static_error(
+                                child.interval().clone(),
+                                StaticErrorKind::ExpectedPrimitiveType {
+                                    actual: identifier_type.clone(),
+                                },
+                            ));
+                        }
+                    }
+                    IndexOperator => {
+                        let symbol_index = child.children()[0].get_symbol_index().unwrap();
+                        let array_type = symbol_table.get(symbol_index).unwrap().symbol_type();
+                        if let SymbolType::Variable(_) = array_type {
                             /* ok */
                         } else {
                             return Err(static_error(
                                 child.interval().clone(),
                                 StaticErrorKind::ExpectedVariable {
-                                    actual: identifier_type.clone(),
+                                    actual: array_type.clone(),
                                 },
                             ));
                         }
@@ -221,8 +258,27 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 ..
             }) = condition_type
             {
-                /* ok */
-                None
+                let mut if_while_type = type_check_recursively(&ast.children()[1], symbol_table)?;
+                if ast.children().len() == 3 {
+                    debug_assert_eq!(ast.kind(), &IfStatement);
+                    let else_type = type_check_recursively(&ast.children()[2], symbol_table)?;
+                    if let Some(if_while_type) = &if_while_type {
+                        if let Some(else_type) = else_type {
+                            if !if_while_type.equals_ignore_var(&else_type) {
+                                return Err(static_error(
+                                    ast.interval().clone(),
+                                    StaticErrorKind::TypeMismatch {
+                                        expected: if_while_type.clone(),
+                                        actual: else_type,
+                                    },
+                                ));
+                            }
+                        }
+                    } else {
+                        if_while_type = else_type;
+                    }
+                }
+                if_while_type
             } else {
                 // expecting a non-var type here, but we actually do not care if it is var or not
                 return Err(static_error(
@@ -256,7 +312,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
                 ));
             }
-            if first_type != second_type {
+            if !first_type.equals_ignore_var(&second_type) {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -334,7 +390,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
                 ));
             }
-            if first_type != second_type {
+            if !first_type.equals_ignore_var(&second_type) {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -374,7 +430,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            if first_type != second_type {
+            if !first_type.equals_ignore_var(&second_type) {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -443,7 +499,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            if first_type != second_type {
+            if !first_type.equals_ignore_var(&second_type) {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {

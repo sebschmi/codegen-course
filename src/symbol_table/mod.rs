@@ -3,7 +3,6 @@ use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
 use log::trace;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::num::NonZeroUsize;
 
 #[cfg(test)]
 mod tests;
@@ -92,7 +91,7 @@ impl SymbolTable {
 
     /// Insert a symbol into the symbol table.
     /// The symbols index will be set to its index in the table.
-    pub fn add_symbol(&mut self, name: String, symbol_type: SymbolType) -> NonZeroUsize {
+    pub fn add_symbol(&mut self, name: String, symbol_type: SymbolType) -> usize {
         let symbol = Symbol {
             index: self.symbols.len(),
             name,
@@ -100,7 +99,7 @@ impl SymbolTable {
         };
         debug_assert!(symbol.index > 0);
         self.symbols.push(symbol);
-        NonZeroUsize::new(self.symbols.len()).unwrap()
+        self.symbols.len() - 1
     }
 
     /// Iterate over all symbols in the table.
@@ -120,6 +119,29 @@ impl SymbolTable {
 impl Symbol {
     pub fn symbol_type(&self) -> &SymbolType {
         &self.symbol_type
+    }
+}
+
+impl SymbolType {
+    /// Compare two `SymbolType`s, treating differing `var` properties of variables as equal.
+    /// This is useful in type checking, since there it does not matter if anything is a reference or value.
+    pub fn equals_ignore_var(&self, other: &Self) -> bool {
+        self.clone_without_var() == other.clone_without_var()
+    }
+
+    /// Clone the type, setting `var` to false.
+    /// This is used in comparisons where the `var` property does not matter.
+    // this hopefully gets optimised properly, since the cloning is not actually necessary, but makes it simpler to write
+    pub fn clone_without_var(&self) -> Self {
+        match self.clone() {
+            SymbolType::Variable(VariableSymbolType { variable_type, .. }) => {
+                SymbolType::Variable(VariableSymbolType {
+                    var: false,
+                    variable_type,
+                })
+            }
+            other => other,
+        }
     }
 }
 
@@ -176,9 +198,7 @@ fn build_symbol_table_recursively(
         Program => {
             map_stack.push();
             let identifier = ast.children_mut()[0].get_identifier_lower_case().unwrap();
-            let index = symbol_table
-                .add_symbol(identifier.to_string(), SymbolType::Program)
-                .get();
+            let index = symbol_table.add_symbol(identifier.to_string(), SymbolType::Program);
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             for child in ast.children_mut().iter_mut().skip(1) {
@@ -189,15 +209,13 @@ fn build_symbol_table_recursively(
         Procedure => {
             let parameter_types = ast.get_parameter_types();
             let identifier = ast.children_mut()[0].get_identifier_lower_case().unwrap();
-            let index = symbol_table
-                .add_symbol(
-                    identifier.to_string(),
-                    SymbolType::Function(FunctionType {
-                        parameter_types,
-                        return_type: None,
-                    }),
-                )
-                .get();
+            let index = symbol_table.add_symbol(
+                identifier.to_string(),
+                SymbolType::Function(FunctionType {
+                    parameter_types,
+                    return_type: None,
+                }),
+            );
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             map_stack.push();
@@ -210,15 +228,13 @@ fn build_symbol_table_recursively(
         Function => {
             let (parameter_types, return_type) = ast.get_parameter_types_and_return_type();
             let identifier = ast.children_mut()[0].get_identifier_lower_case().unwrap();
-            let index = symbol_table
-                .add_symbol(
-                    identifier.to_string(),
-                    SymbolType::Function(FunctionType {
-                        parameter_types,
-                        return_type: Some(return_type),
-                    }),
-                )
-                .get();
+            let index = symbol_table.add_symbol(
+                identifier.to_string(),
+                SymbolType::Function(FunctionType {
+                    parameter_types,
+                    return_type: Some(return_type),
+                }),
+            );
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             map_stack.push();
@@ -233,15 +249,13 @@ fn build_symbol_table_recursively(
                 .get_identifier_lower_case()
                 .unwrap()
                 .to_string();
-            let index = symbol_table
-                .add_symbol(
-                    identifier.clone(),
-                    SymbolType::Variable(VariableSymbolType {
-                        var: true,
-                        variable_type: ast.get_variable_type(),
-                    }),
-                )
-                .get();
+            let index = symbol_table.add_symbol(
+                identifier.clone(),
+                SymbolType::Variable(VariableSymbolType {
+                    var: true,
+                    variable_type: ast.get_variable_type(),
+                }),
+            );
             map_stack.insert(identifier, index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
         }
@@ -250,15 +264,13 @@ fn build_symbol_table_recursively(
                 .get_identifier_lower_case()
                 .unwrap()
                 .to_string();
-            let index = symbol_table
-                .add_symbol(
-                    identifier.clone(),
-                    SymbolType::Variable(VariableSymbolType {
-                        var: false,
-                        variable_type: ast.get_variable_type(),
-                    }),
-                )
-                .get();
+            let index = symbol_table.add_symbol(
+                identifier.clone(),
+                SymbolType::Variable(VariableSymbolType {
+                    var: false,
+                    variable_type: ast.get_variable_type(),
+                }),
+            );
             map_stack.insert(identifier, index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
         }
@@ -273,15 +285,13 @@ fn build_symbol_table_recursively(
             let variable_type = ast.get_variable_type();
             for child in ast.children_mut().iter_mut().rev().skip(1).rev() {
                 let identifier = child.get_identifier_lower_case().unwrap().to_string();
-                let index = symbol_table
-                    .add_symbol(
-                        identifier.clone(),
-                        SymbolType::Variable(VariableSymbolType {
-                            var: false,
-                            variable_type: variable_type.clone(),
-                        }),
-                    )
-                    .get();
+                let index = symbol_table.add_symbol(
+                    identifier.clone(),
+                    SymbolType::Variable(VariableSymbolType {
+                        var: false,
+                        variable_type: variable_type.clone(),
+                    }),
+                );
                 map_stack.insert(identifier, index);
                 *child.get_symbol_index_mut().unwrap() = index;
             }

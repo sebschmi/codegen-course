@@ -625,7 +625,13 @@ fn parse_cass(
 
     let ast_node_kind = if let Ok(Some(_)) = optional_token(scanner, Token::OpenParenthesis) {
         children.extend(parse_arguments(scanner)?);
-        AstNodeKind::CallStatement
+        if children[0].get_identifier_lower_case().unwrap() == "read" {
+            AstNodeKind::ReadStatement
+        } else if children[0].get_identifier_lower_case().unwrap() == "writeln" {
+            AstNodeKind::WriteStatement
+        } else {
+            AstNodeKind::CallStatement
+        }
     } else {
         expect_token(scanner, Token::AssignOperator)?;
         children.push(parse_expression(scanner)?);
