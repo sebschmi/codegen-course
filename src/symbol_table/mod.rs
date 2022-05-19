@@ -37,6 +37,8 @@ pub enum SymbolType {
     Variable(VariableSymbolType),
     /// A built-in function, which is a special case of a function as it can have a variable amount of parameters.
     BuiltinFunction,
+    /// A built-in constant like `true` or `false`, which can be overridden by variable declarations.
+    BuiltinConstant,
     /// The name of the program.
     Program,
     /// The empty type, returned by procedures.
@@ -62,6 +64,8 @@ pub struct VariableSymbolType {
     pub var: bool,
     /// The type of the value of the variable.
     pub variable_type: TypeName,
+    /// This variable's offset from the frame pointer.
+    pub frame_offset: Option<usize>,
 }
 
 impl SymbolTable {
@@ -86,6 +90,8 @@ impl SymbolTable {
                 return_type: None,
             }),
         );
+        result.add_symbol("true".to_string(), SymbolType::BuiltinConstant);
+        result.add_symbol("false".to_string(), SymbolType::BuiltinConstant);
         result
     }
 
@@ -120,6 +126,10 @@ impl Symbol {
     pub fn symbol_type(&self) -> &SymbolType {
         &self.symbol_type
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 impl SymbolType {
@@ -138,6 +148,7 @@ impl SymbolType {
                 SymbolType::Variable(VariableSymbolType {
                     var: false,
                     variable_type,
+                    frame_offset: None,
                 })
             }
             other => other,
@@ -254,6 +265,7 @@ fn build_symbol_table_recursively(
                 SymbolType::Variable(VariableSymbolType {
                     var: true,
                     variable_type: ast.get_variable_type(),
+                    frame_offset: None,
                 }),
             );
             map_stack.insert(identifier, index);
@@ -269,6 +281,7 @@ fn build_symbol_table_recursively(
                 SymbolType::Variable(VariableSymbolType {
                     var: false,
                     variable_type: ast.get_variable_type(),
+                    frame_offset: None,
                 }),
             );
             map_stack.insert(identifier, index);
@@ -290,6 +303,7 @@ fn build_symbol_table_recursively(
                     SymbolType::Variable(VariableSymbolType {
                         var: false,
                         variable_type: variable_type.clone(),
+                        frame_offset: None,
                     }),
                 );
                 map_stack.insert(identifier, index);

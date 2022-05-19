@@ -420,9 +420,8 @@ end.
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Literal {
-                                                literal_type: TypeName::Primitive {
-                                                    primitive_type: PrimitiveTypeName::Integer,
-                                                },
+                                                literal_type: PrimitiveTypeName::Integer,
+
                                                 value: "0".to_string(),
                                             },
                                             interval: ScanInterval {
@@ -1293,10 +1292,8 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Literal {
-                                                        literal_type: TypeName::Primitive {
-                                                            primitive_type:
-                                                                PrimitiveTypeName::Integer,
-                                                        },
+                                                        literal_type: PrimitiveTypeName::Integer,
+
                                                         value: "0".to_string(),
                                                     },
                                                     interval: ScanInterval {
@@ -1774,9 +1771,7 @@ end.";
                                     children: vec![AstNode {
                                         children: vec![],
                                         kind: AstNodeKind::Literal {
-                                            literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer
-                                            },
+                                            literal_type: PrimitiveTypeName::Integer,
                                             value: "2".to_string()
                                         },
                                         interval: ScanInterval {
@@ -1831,9 +1826,8 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Literal {
-                                                            literal_type: TypeName::Primitive {
-                                                                primitive_type: PrimitiveTypeName::Integer
-                                                            },
+                                                            literal_type:
+                                                                PrimitiveTypeName::Integer,
                                                             value: "0".to_string()
                                                         },
                                                         interval: ScanInterval {
@@ -1871,9 +1865,8 @@ end.";
                                                     AstNode {
                                                         children: vec![],
                                                         kind: AstNodeKind::Literal {
-                                                            literal_type: TypeName::Primitive {
-                                                                primitive_type: PrimitiveTypeName::Integer
-                                                            },
+                                                            literal_type:
+                                                                PrimitiveTypeName::Integer,
                                                             value: "1".to_string()
                                                         },
                                                         interval: ScanInterval {
@@ -1923,7 +1916,8 @@ end.";
                                                         children: vec![],
                                                         kind: AstNodeKind::Type {
                                                             type_name: TypeName::Primitive {
-                                                                primitive_type: PrimitiveTypeName::Integer
+                                                                primitive_type:
+                                                                    PrimitiveTypeName::Integer
                                                             }
                                                         },
                                                         interval: ScanInterval {
@@ -1977,9 +1971,8 @@ end.";
                                                             AstNode {
                                                                 children: vec![],
                                                                 kind: AstNodeKind::Literal {
-                                                                    literal_type: TypeName::Primitive {
-                                                                        primitive_type: PrimitiveTypeName::Integer
-                                                                    },
+                                                                    literal_type:
+                                                                        PrimitiveTypeName::Integer,
                                                                     value: "0".to_string()
                                                                 },
                                                                 interval: ScanInterval {
@@ -2028,9 +2021,8 @@ end.";
                                                             AstNode {
                                                                 children: vec![],
                                                                 kind: AstNodeKind::Literal {
-                                                                    literal_type: TypeName::Primitive {
-                                                                        primitive_type: PrimitiveTypeName::Integer
-                                                                    },
+                                                                    literal_type:
+                                                                        PrimitiveTypeName::Integer,
                                                                     value: "0".to_string()
                                                                 },
                                                                 interval: ScanInterval {
@@ -2068,9 +2060,8 @@ end.";
                                                             AstNode {
                                                                 children: vec![],
                                                                 kind: AstNodeKind::Literal {
-                                                                    literal_type: TypeName::Primitive {
-                                                                        primitive_type: PrimitiveTypeName::Integer
-                                                                    },
+                                                                    literal_type:
+                                                                        PrimitiveTypeName::Integer,
                                                                     value: "1".to_string()
                                                                 },
                                                                 interval: ScanInterval {
@@ -2119,9 +2110,8 @@ end.";
                                                             AstNode {
                                                                 children: vec![],
                                                                 kind: AstNodeKind::Literal {
-                                                                    literal_type: TypeName::Primitive {
-                                                                        primitive_type: PrimitiveTypeName::Integer
-                                                                    },
+                                                                    literal_type:
+                                                                        PrimitiveTypeName::Integer,
                                                                     value: "1".to_string()
                                                                 },
                                                                 interval: ScanInterval {
@@ -2159,9 +2149,8 @@ end.";
                                                             AstNode {
                                                                 children: vec![],
                                                                 kind: AstNodeKind::Literal {
-                                                                    literal_type: TypeName::Primitive {
-                                                                        primitive_type: PrimitiveTypeName::Integer
-                                                                    },
+                                                                    literal_type:
+                                                                        PrimitiveTypeName::Integer,
                                                                     value: "0".to_string()
                                                                 },
                                                                 interval: ScanInterval {
@@ -2260,9 +2249,7 @@ end.";
                                     children: vec![AstNode {
                                         children: vec![],
                                         kind: AstNodeKind::Literal {
-                                            literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer
-                                            },
+                                            literal_type: PrimitiveTypeName::Integer,
                                             value: "2".to_string()
                                         },
                                         interval: ScanInterval {
@@ -2449,9 +2436,8 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type: PrimitiveTypeName::Integer
-                                                                },
+                                                                literal_type:
+                                                                    PrimitiveTypeName::Integer,
                                                                 value: "0".to_string()
                                                             },
                                                             interval: ScanInterval {
@@ -2489,9 +2475,8 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type: PrimitiveTypeName::Integer
-                                                                },
+                                                                literal_type:
+                                                                    PrimitiveTypeName::Integer,
                                                                 value: "1".to_string()
                                                             },
                                                             interval: ScanInterval {
@@ -2549,9 +2534,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Literal {
-                                                        literal_type: TypeName::Primitive {
-                                                            primitive_type: PrimitiveTypeName::Integer
-                                                        },
+                                                        literal_type: PrimitiveTypeName::Integer,
                                                         value: "0".to_string()
                                                     },
                                                     interval: ScanInterval {
@@ -2589,9 +2572,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Literal {
-                                                        literal_type: TypeName::Primitive {
-                                                            primitive_type: PrimitiveTypeName::Integer
-                                                        },
+                                                        literal_type: PrimitiveTypeName::Integer,
                                                         value: "1".to_string()
                                                     },
                                                     interval: ScanInterval {
@@ -2640,9 +2621,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Literal {
-                                                        literal_type: TypeName::Primitive {
-                                                            primitive_type: PrimitiveTypeName::Integer
-                                                        },
+                                                        literal_type: PrimitiveTypeName::Integer,
                                                         value: "1".to_string()
                                                     },
                                                     interval: ScanInterval {
@@ -2707,9 +2686,8 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type: PrimitiveTypeName::Integer
-                                                                },
+                                                                literal_type:
+                                                                    PrimitiveTypeName::Integer,
                                                                 value: "1".to_string()
                                                             },
                                                             interval: ScanInterval {
@@ -2731,9 +2709,7 @@ end.";
                                                 AstNode {
                                                     children: vec![],
                                                     kind: AstNodeKind::Literal {
-                                                        literal_type: TypeName::Primitive {
-                                                            primitive_type: PrimitiveTypeName::Integer
-                                                        },
+                                                        literal_type: PrimitiveTypeName::Integer,
                                                         value: "0".to_string()
                                                     },
                                                     interval: ScanInterval {
@@ -2849,9 +2825,8 @@ end.";
                                                         AstNode {
                                                             children: vec![],
                                                             kind: AstNodeKind::Literal {
-                                                                literal_type: TypeName::Primitive {
-                                                                    primitive_type: PrimitiveTypeName::Integer
-                                                                },
+                                                                literal_type:
+                                                                    PrimitiveTypeName::Integer,
                                                                 value: "0".to_string()
                                                             },
                                                             interval: ScanInterval {
@@ -2928,9 +2903,7 @@ end.";
                                     children: vec![AstNode {
                                         children: vec![],
                                         kind: AstNodeKind::Literal {
-                                            literal_type: TypeName::Primitive {
-                                                primitive_type: PrimitiveTypeName::Integer
-                                            },
+                                            literal_type: PrimitiveTypeName::Integer,
                                             value: "2".to_string()
                                         },
                                         interval: ScanInterval {
@@ -2996,9 +2969,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Literal {
-                                                literal_type: TypeName::Primitive {
-                                                    primitive_type: PrimitiveTypeName::Integer
-                                                },
+                                                literal_type: PrimitiveTypeName::Integer,
                                                 value: "0".to_string()
                                             },
                                             interval: ScanInterval {
@@ -3061,9 +3032,7 @@ end.";
                                         AstNode {
                                             children: vec![],
                                             kind: AstNodeKind::Literal {
-                                                literal_type: TypeName::Primitive {
-                                                    primitive_type: PrimitiveTypeName::Integer
-                                                },
+                                                literal_type: PrimitiveTypeName::Integer,
                                                 value: "1".to_string()
                                             },
                                             interval: ScanInterval {

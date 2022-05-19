@@ -151,6 +151,12 @@ pub enum Error {
     /// An error when reading the input file.
     ReadError(std::io::Error),
 
+    /// An error when writing the output file.
+    WriteError(std::io::Error),
+
+    /// An error when writing formatted strings.
+    FmtError(std::fmt::Error),
+
     /// An invalid utf8 character was found in the input.
     InvalidUtf8Character {
         invalid: u32,
@@ -175,5 +181,11 @@ impl From<ParserError> for Error {
 impl From<StaticError> for Error {
     fn from(error: StaticError) -> Self {
         Self::StaticError(error)
+    }
+}
+
+impl From<std::fmt::Error> for Error {
+    fn from(error: std::fmt::Error) -> Self {
+        Self::FmtError(error)
     }
 }

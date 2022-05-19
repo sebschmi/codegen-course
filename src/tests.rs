@@ -1,4 +1,17 @@
 use crate::{compile, initialise_logging};
+use std::io::Write;
+
+pub struct NullWriter;
+
+impl Write for NullWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
 
 #[test]
 fn test_gcd_1() {
@@ -26,7 +39,10 @@ end.
 ";
 
     initialise_logging();
-    compile(program.as_bytes()).unwrap();
+    let mut output = Vec::<u8>::new();
+    compile(program.as_bytes(), &mut output).unwrap();
+    let output = String::from_utf8(output).unwrap();
+    println!("{output}");
 }
 
 #[test]
@@ -67,7 +83,10 @@ begin
 end.";
 
     initialise_logging();
-    compile(program.as_bytes()).unwrap();
+    let mut output = Vec::<u8>::new();
+    compile(program.as_bytes(), &mut output).unwrap();
+    let output = String::from_utf8(output).unwrap();
+    println!("{output}");
 }
 
 #[test]
@@ -111,5 +130,8 @@ begin
 end.";
 
     initialise_logging();
-    compile(program.as_bytes()).unwrap();
+    let mut output = Vec::<u8>::new();
+    compile(program.as_bytes(), &mut output).unwrap();
+    let output = String::from_utf8(output).unwrap();
+    println!("{output}");
 }

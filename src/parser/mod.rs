@@ -102,7 +102,7 @@ pub enum AstNodeKind {
 
     /// A literal representing a constant value.
     Literal {
-        literal_type: TypeName,
+        literal_type: PrimitiveTypeName,
         value: String,
     },
     /// An identifier of a variable, function, procedure or program.
@@ -248,6 +248,17 @@ impl AstNode {
             type_name.clone()
         } else {
             unreachable!("Illegal AST shape: {self:#?}")
+        }
+    }
+}
+
+impl PrimitiveTypeName {
+    pub fn c_type_name(&self) -> &str {
+        match self {
+            PrimitiveTypeName::Boolean => "char",
+            PrimitiveTypeName::Integer => "int",
+            PrimitiveTypeName::Real => "float",
+            PrimitiveTypeName::String => "char*",
         }
     }
 }
@@ -1006,7 +1017,7 @@ fn parse_factor(
             AstNode {
                 children: Vec::new(),
                 kind: AstNodeKind::Literal {
-                    literal_type: TypeName::Primitive { primitive_type },
+                    literal_type: primitive_type,
                     value,
                 },
                 interval,
