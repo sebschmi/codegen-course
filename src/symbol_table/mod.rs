@@ -3,6 +3,7 @@ use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
 use log::trace;
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::mem;
 
 #[cfg(test)]
 mod tests;
@@ -65,7 +66,7 @@ pub struct VariableSymbolType {
     /// The type of the value of the variable.
     pub variable_type: TypeName,
     /// This variable's offset from the frame pointer.
-    pub frame_offset: Option<usize>,
+    pub frame_offset: usize,
 }
 
 impl SymbolTable {
@@ -114,6 +115,7 @@ impl SymbolTable {
         self.symbols.iter().skip(1)
     }
 
+    /// Return the symbol with the given index.
     pub fn get(&self, index: usize) -> Option<&Symbol> {
         if index == 0 {
             return None;
@@ -123,32 +125,35 @@ impl SymbolTable {
 }
 
 impl Symbol {
+    /// Return the type of the symbol.
     pub fn symbol_type(&self) -> &SymbolType {
         &self.symbol_type
     }
 
+    /// Return the name (identifier) of the symbol in lower case.
+    /// Multiple symbols can have the same name, if they are e.g. in different scopes.
     pub fn name(&self) -> &str {
         &self.name
     }
 }
 
 impl SymbolType {
-    /// Compare two `SymbolType`s, treating differing `var` properties of variables as equal.
-    /// This is useful in type checking, since there it does not matter if anything is a reference or value.
-    pub fn equals_ignore_var(&self, other: &Self) -> bool {
-        self.clone_without_var() == other.clone_without_var()
+    /// Compare two `SymbolType`s, treating differing `var` and `frame_offset` properties of variables as equal.
+    /// This is useful in type checking, since there it does not matter if anything is a reference or value or what frame offset it has.
+    pub fn equals_ignore_var_and_offset(&self, other: &Self) -> bool {
+        self.clone_without_var_and_offset() == other.clone_without_var_and_offset()
     }
 
-    /// Clone the type, setting `var` to false.
+    /// Clone the type, setting `var` to false and `frame_offset` to 0.
     /// This is used in comparisons where the `var` property does not matter.
     // this hopefully gets optimised properly, since the cloning is not actually necessary, but makes it simpler to write
-    pub fn clone_without_var(&self) -> Self {
+    pub fn clone_without_var_and_offset(&self) -> Self {
         match self.clone() {
             SymbolType::Variable(VariableSymbolType { variable_type, .. }) => {
                 SymbolType::Variable(VariableSymbolType {
                     var: false,
                     variable_type,
-                    frame_offset: None,
+                    frame_offset: 0,
                 })
             }
             other => other,
@@ -186,7 +191,18 @@ impl<K: Eq + Hash, V> MapStack<K, V> {
     }
 }
 
+/// Round up to the next multiple of step.
+fn ceil_int(value: usize, step: usize) -> usize {
+    // this can probably done without branch
+    if value % step != 0 {
+        value + step - (value % step)
+    } else {
+        value
+    }
+}
+
 /// Build a single global symbol table and resolve all usages of symbols.
+/// Symbols will also be assigned to an offset in the stack frame.
 pub fn build_symbol_table(ast: &mut AstNode) -> Result<SymbolTable> {
     let mut symbol_table = SymbolTable::new();
     let mut map_stack = MapStack::default();
@@ -195,13 +211,15 @@ pub fn build_symbol_table(ast: &mut AstNode) -> Result<SymbolTable> {
         map_stack.insert(symbol.name.to_string(), symbol.index);
     }
 
-    build_symbol_table_recursively(ast, &mut symbol_table, &mut map_stack).map(|()| symbol_table)
+    build_symbol_table_recursively(ast, &mut symbol_table, &mut map_stack, &mut 0)
+        .map(|()| symbol_table)
 }
 
 fn build_symbol_table_recursively(
     ast: &mut AstNode,
     symbol_table: &mut SymbolTable,
     map_stack: &mut MapStack<String, usize>,
+    frame_offset: &mut usize,
 ) -> Result<()> {
     use AstNodeKind::*;
 
@@ -213,7 +231,8 @@ fn build_symbol_table_recursively(
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             for child in ast.children_mut().iter_mut().skip(1) {
-                build_symbol_table_recursively(child, symbol_table, map_stack)?;
+                // use a new frame offset for each procedure and function
+                build_symbol_table_recursively(child, symbol_table, map_stack, &mut 0)?;
             }
             map_stack.pop();
         }
@@ -232,7 +251,7 @@ fn build_symbol_table_recursively(
             map_stack.push();
             // skip to not the build symbol table for the identifier twice
             for child in ast.children_mut().iter_mut().skip(1) {
-                build_symbol_table_recursively(child, symbol_table, map_stack)?;
+                build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
             }
             map_stack.pop();
         }
@@ -251,7 +270,7 @@ fn build_symbol_table_recursively(
             map_stack.push();
             // skip to not build the symbol table for the identifier twice
             for child in ast.children_mut().iter_mut().skip(1) {
-                build_symbol_table_recursively(child, symbol_table, map_stack)?;
+                build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
             }
             map_stack.pop();
         }
@@ -260,14 +279,18 @@ fn build_symbol_table_recursively(
                 .get_identifier_lower_case()
                 .unwrap()
                 .to_string();
+            let variable_type = ast.get_variable_type();
+            let type_size = mem::size_of::<usize>(); // var parameters are pointers in C
+            *frame_offset = ceil_int(*frame_offset, type_size);
             let index = symbol_table.add_symbol(
                 identifier.clone(),
                 SymbolType::Variable(VariableSymbolType {
                     var: true,
-                    variable_type: ast.get_variable_type(),
-                    frame_offset: None,
+                    variable_type,
+                    frame_offset: *frame_offset,
                 }),
             );
+            *frame_offset += type_size;
             map_stack.insert(identifier, index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
         }
@@ -276,36 +299,43 @@ fn build_symbol_table_recursively(
                 .get_identifier_lower_case()
                 .unwrap()
                 .to_string();
+            let variable_type = ast.get_variable_type();
+            let type_size = variable_type.type_size();
+            *frame_offset = ceil_int(*frame_offset, type_size);
             let index = symbol_table.add_symbol(
                 identifier.clone(),
                 SymbolType::Variable(VariableSymbolType {
                     var: false,
-                    variable_type: ast.get_variable_type(),
-                    frame_offset: None,
+                    variable_type,
+                    frame_offset: *frame_offset,
                 }),
             );
+            *frame_offset += type_size;
             map_stack.insert(identifier, index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
         }
         Block => {
             map_stack.push();
             for child in ast.children_mut() {
-                build_symbol_table_recursively(child, symbol_table, map_stack)?;
+                build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
             }
             map_stack.pop();
         }
         VariableDeclaration => {
             let variable_type = ast.get_variable_type();
+            let type_size = variable_type.type_size();
             for child in ast.children_mut().iter_mut().rev().skip(1).rev() {
                 let identifier = child.get_identifier_lower_case().unwrap().to_string();
+                *frame_offset = ceil_int(*frame_offset, type_size);
                 let index = symbol_table.add_symbol(
                     identifier.clone(),
                     SymbolType::Variable(VariableSymbolType {
                         var: false,
                         variable_type: variable_type.clone(),
-                        frame_offset: None,
+                        frame_offset: *frame_offset,
                     }),
                 );
+                *frame_offset += type_size;
                 map_stack.insert(identifier, index);
                 *child.get_symbol_index_mut().unwrap() = index;
             }
@@ -316,7 +346,7 @@ fn build_symbol_table_recursively(
         | SubOperator | OrOperator | NotOperator | MulOperator | DivOperator | ModOperator
         | AndOperator | DotOperator | IndexOperator => {
             for child in ast.children_mut().iter_mut() {
-                build_symbol_table_recursively(child, symbol_table, map_stack)?;
+                build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
             }
         }
         Literal { .. } => { /* literals cannot use symbols */ }

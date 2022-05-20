@@ -1,5 +1,5 @@
 use crate::error::Result;
-use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
+use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName};
 use crate::symbol_table::{SymbolTable, SymbolType};
 use std::fmt::Write;
 
@@ -244,14 +244,7 @@ fn generate_code_recursively<Writer: std::io::Write>(
                 }
             }
         }
-        AstNodeKind::Type { type_name } => match type_name {
-            TypeName::Primitive { primitive_type } => {
-                write!(output, "{}", primitive_type.c_type_name())?
-            }
-            TypeName::UnsizedArray { primitive_type } | TypeName::SizedArray { primitive_type } => {
-                write!(output, "{}*", primitive_type.c_type_name())?
-            }
-        },
+        AstNodeKind::Type { type_name } => write!(output, "{}*", type_name.c_type_name())?,
     }
 
     Ok(())

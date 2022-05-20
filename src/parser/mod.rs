@@ -5,6 +5,7 @@ use crate::Error;
 use log::trace;
 use std::collections::VecDeque;
 use std::iter::Peekable;
+use std::mem;
 
 #[cfg(test)]
 mod tests;
@@ -252,7 +253,39 @@ impl AstNode {
     }
 }
 
+impl TypeName {
+    /// Returns the size of the type in its C representation.
+    pub fn type_size(&self) -> usize {
+        match self {
+            TypeName::Primitive { primitive_type } => match primitive_type {
+                PrimitiveTypeName::Boolean => 1, // we use chars for bools, which are 1 byte in C AFAIK
+                PrimitiveTypeName::Integer => 4, // ints in C are 4 bytes AFAIK
+                PrimitiveTypeName::Real => 4,    // floats in C are 4 bytes AFAIK
+                PrimitiveTypeName::String => mem::size_of::<usize>(), // strings are pointers in C
+            },
+            TypeName::UnsizedArray { .. } => mem::size_of::<usize>(), // strings are pointers in C
+            TypeName::SizedArray { .. } => mem::size_of::<usize>(),   // strings are pointers in C
+        }
+    }
+
+    /// Returns the name of a type in its C representation.
+    pub fn c_type_name(&self) -> &str {
+        match self {
+            TypeName::Primitive { primitive_type } => primitive_type.c_type_name(),
+            TypeName::UnsizedArray { primitive_type } | TypeName::SizedArray { primitive_type } => {
+                match primitive_type {
+                    PrimitiveTypeName::Boolean => "char*",
+                    PrimitiveTypeName::Integer => "int*",
+                    PrimitiveTypeName::Real => "float*",
+                    PrimitiveTypeName::String => "char**",
+                }
+            }
+        }
+    }
+}
+
 impl PrimitiveTypeName {
+    /// Returns the name of a type in its C representation.
     pub fn c_type_name(&self) -> &str {
         match self {
             PrimitiveTypeName::Boolean => "char",

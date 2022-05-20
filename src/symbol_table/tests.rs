@@ -1,6 +1,7 @@
 use crate::parser::{PrimitiveTypeName, TypeName};
 use crate::symbol_table::{FunctionType, Symbol, SymbolTable, SymbolType, VariableSymbolType};
 use crate::{build_ast, build_symbol_table, initialise_logging, ReadIterator, Scanner};
+use std::mem;
 
 #[test]
 fn test_gcd_1() {
@@ -79,7 +80,7 @@ end.
                     index: 7,
                     name: "n1".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 0,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -90,7 +91,7 @@ end.
                     index: 8,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 4,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -101,7 +102,7 @@ end.
                     index: 9,
                     name: "tmp".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 8,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -112,7 +113,7 @@ end.
                     index: 10,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 12,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -230,7 +231,7 @@ end.";
                     index: 8,
                     name: "n1".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 0,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -241,7 +242,7 @@ end.";
                     index: 9,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 4,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -252,7 +253,7 @@ end.";
                     index: 10,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 8,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -263,7 +264,7 @@ end.";
                     index: 11,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 12,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -274,7 +275,7 @@ end.";
                     index: 12,
                     name: "n1".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 0,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -285,7 +286,7 @@ end.";
                     index: 13,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 4,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -399,7 +400,7 @@ end.";
                     index: 8,
                     name: "pair".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 0,
                         var: false,
                         variable_type: TypeName::SizedArray {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -410,7 +411,7 @@ end.";
                     index: 9,
                     name: "tmp".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: mem::size_of::<usize>(),
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -436,7 +437,7 @@ end.";
                     index: 11,
                     name: "pair".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 0,
                         var: false,
                         variable_type: TypeName::SizedArray {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -447,7 +448,7 @@ end.";
                     index: 12,
                     name: "result".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: mem::size_of::<usize>(),
                         var: true,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -458,7 +459,7 @@ end.";
                     index: 13,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: mem::size_of::<usize>() * 2,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -469,7 +470,7 @@ end.";
                     index: 14,
                     name: "pair".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: 0,
                         var: false,
                         variable_type: TypeName::SizedArray {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -480,7 +481,7 @@ end.";
                     index: 15,
                     name: "result".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: None,
+                        frame_offset: mem::size_of::<usize>(),
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,

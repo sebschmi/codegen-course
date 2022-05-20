@@ -8,8 +8,8 @@ use crate::error::{Error, Result};
 use crate::io::ReadIterator;
 use crate::parser::build_ast;
 use crate::scanner::Scanner;
-use crate::static_ast_checks::type_check;
 use crate::symbol_table::build_symbol_table;
+use crate::type_checker::type_check;
 use clap::Parser;
 use log::{info, LevelFilter};
 use simplelog::{ColorChoice, CombinedLogger, Config, TermLogger, TerminalMode};
@@ -28,12 +28,12 @@ pub mod io;
 pub mod parser;
 /// Converts the input text into tokens.
 pub mod scanner;
-/// Static checks performed on the AST.
-pub mod static_ast_checks;
 /// The symbol table extracted from the AST.
 pub mod symbol_table;
 #[cfg(test)]
 mod tests;
+/// Type checks the AST.
+pub mod type_checker;
 
 /// The command line arguments used for configuring the compiler.
 #[derive(Parser)]
