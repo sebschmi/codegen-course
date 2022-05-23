@@ -58,7 +58,8 @@ end.
                         parameter_types: vec![TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Boolean
                         }],
-                        return_type: None
+                        return_type: None,
+                        frame_size: 0,
                     }),
                 },
                 Symbol {
@@ -91,7 +92,7 @@ end.
                     index: 8,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 4,
+                        frame_offset: 8,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -102,7 +103,7 @@ end.
                     index: 9,
                     name: "tmp".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 8,
+                        frame_offset: 16,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -113,7 +114,7 @@ end.
                     index: 10,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 12,
+                        frame_offset: 24,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -121,6 +122,7 @@ end.
                     },),
                 },
             ],
+            main_frame_size: 4 * mem::size_of::<usize>(),
         },
     );
 }
@@ -192,7 +194,8 @@ end.";
                         parameter_types: vec![TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Boolean
                         }],
-                        return_type: None
+                        return_type: None,
+                        frame_size: 0,
                     }),
                 },
                 Symbol {
@@ -225,6 +228,7 @@ end.";
                         return_type: Some(TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
                         },),
+                        frame_size: 4 * mem::size_of::<usize>(),
                     },),
                 },
                 Symbol {
@@ -242,7 +246,7 @@ end.";
                     index: 9,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 4,
+                        frame_offset: 8,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -253,7 +257,7 @@ end.";
                     index: 10,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 8,
+                        frame_offset: 16,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -264,7 +268,7 @@ end.";
                     index: 11,
                     name: "new".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 12,
+                        frame_offset: 24,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -286,7 +290,7 @@ end.";
                     index: 13,
                     name: "n2".to_string(),
                     symbol_type: SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 4,
+                        frame_offset: 8,
                         var: false,
                         variable_type: TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Integer,
@@ -294,7 +298,8 @@ end.";
                     },),
                 },
             ],
-        }
+            main_frame_size: 2 * mem::size_of::<usize>(),
+        },
     );
 }
 
@@ -368,7 +373,8 @@ end.";
                         parameter_types: vec![TypeName::Primitive {
                             primitive_type: PrimitiveTypeName::Boolean
                         }],
-                        return_type: None
+                        return_type: None,
+                        frame_size: 0,
                     }),
                 },
                 Symbol {
@@ -394,6 +400,7 @@ end.";
                             primitive_type: PrimitiveTypeName::Integer,
                         },],
                         return_type: None,
+                        frame_size: 2 * mem::size_of::<usize>(),
                     },),
                 },
                 Symbol {
@@ -431,6 +438,7 @@ end.";
                             },
                         ],
                         return_type: None,
+                        frame_size: 3 * mem::size_of::<usize>(),
                     },),
                 },
                 Symbol {
@@ -489,6 +497,7 @@ end.";
                     },),
                 },
             ],
+            main_frame_size: 2 * mem::size_of::<usize>(),
         }
     );
 }

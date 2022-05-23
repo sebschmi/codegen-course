@@ -16,6 +16,7 @@ mod tests;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SymbolTable {
     symbols: Vec<Symbol>,
+    main_frame_size: usize,
 }
 
 /// An entry in the symbol table.
@@ -55,6 +56,8 @@ pub struct FunctionType {
     /// The optional return type.
     /// This is `None` for a procedure, and `Some(_)` for a function.
     pub return_type: Option<TypeName>,
+    /// The size of the frame of this function, including its arguments.
+    pub frame_size: usize,
 }
 
 /// The type of a variable.
@@ -79,6 +82,7 @@ impl SymbolTable {
                 name: "".to_string(),
                 symbol_type: SymbolType::BuiltinFunction,
             }],
+            main_frame_size: 0,
         };
         result.add_symbol("read".to_string(), SymbolType::BuiltinFunction);
         result.add_symbol("writeln".to_string(), SymbolType::BuiltinFunction);
@@ -89,6 +93,7 @@ impl SymbolTable {
                     primitive_type: PrimitiveTypeName::Boolean,
                 }],
                 return_type: None,
+                frame_size: 0,
             }),
         );
         result.add_symbol("true".to_string(), SymbolType::BuiltinConstant);
@@ -122,6 +127,24 @@ impl SymbolTable {
         }
         self.symbols.get(index)
     }
+
+    /// Iterate over all symbols part of the main function (the "main-block").
+    pub fn iter_symbols_in_main(&self) -> impl Iterator<Item = &Symbol> {
+        // the main block is always last in the symbol table
+        let offset = self
+            .symbols
+            .iter()
+            .rev()
+            .find(|symbol| symbol.index == 0)
+            .unwrap()
+            .index;
+        self.symbols.iter().skip(offset)
+    }
+
+    /// Returns the size of the frame of the implicit main function.
+    pub fn main_frame_size(&self) -> usize {
+        self.main_frame_size
+    }
 }
 
 impl Symbol {
@@ -134,6 +157,10 @@ impl Symbol {
     /// Multiple symbols can have the same name, if they are e.g. in different scopes.
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
     }
 }
 
@@ -157,6 +184,14 @@ impl SymbolType {
                 })
             }
             other => other,
+        }
+    }
+
+    pub fn unwrap_variable(&self) -> &VariableSymbolType {
+        if let SymbolType::Variable(result) = self {
+            result
+        } else {
+            panic!("Not a variable: {self:?}");
         }
     }
 }
@@ -230,9 +265,25 @@ fn build_symbol_table_recursively(
             let index = symbol_table.add_symbol(identifier.to_string(), SymbolType::Program);
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
-            for child in ast.children_mut().iter_mut().skip(1) {
+            for child in ast.children_mut().iter_mut().skip(1).rev().skip(1).rev() {
                 // use a new frame offset for each procedure and function
                 build_symbol_table_recursively(child, symbol_table, map_stack, &mut 0)?;
+            }
+            // only set main frame size if it contains any symbols
+            let symbol_count = symbol_table.symbols.len();
+            build_symbol_table_recursively(
+                ast.children_mut().last_mut().unwrap(),
+                symbol_table,
+                map_stack,
+                &mut 0,
+            )?;
+            if symbol_table.symbols.len() > symbol_count {
+                let last_symbol = symbol_table.symbols.last().unwrap();
+                let last_symbol_type = last_symbol.symbol_type.unwrap_variable();
+                symbol_table.main_frame_size = ceil_int(
+                    last_symbol_type.frame_offset + last_symbol_type.variable_type.type_size(),
+                    mem::size_of::<usize>(),
+                );
             }
             map_stack.pop();
         }
@@ -244,14 +295,33 @@ fn build_symbol_table_recursively(
                 SymbolType::Function(FunctionType {
                     parameter_types,
                     return_type: None,
+                    frame_size: 0,
                 }),
             );
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             map_stack.push();
-            // skip to not the build symbol table for the identifier twice
+            // only set frame size if it contains any symbols
+            let symbol_count = symbol_table.symbols.len();
+            // skip to not build the symbol table for the identifier twice
             for child in ast.children_mut().iter_mut().skip(1) {
                 build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
+            }
+            if symbol_table.symbols.len() > symbol_count {
+                let last_symbol = symbol_table.symbols.last().unwrap();
+                let last_symbol_type = last_symbol.symbol_type.unwrap_variable();
+                // couldn't figure out a better way to satisfy the borrow checker than computing this outside of the branch
+                let new_frame_size = ceil_int(
+                    last_symbol_type.frame_offset + last_symbol_type.variable_type.type_size(),
+                    mem::size_of::<usize>(),
+                );
+                if let SymbolType::Function(FunctionType { frame_size, .. }) =
+                    &mut symbol_table.symbols[index].symbol_type
+                {
+                    *frame_size = new_frame_size;
+                } else {
+                    unreachable!()
+                }
             }
             map_stack.pop();
         }
@@ -263,14 +333,33 @@ fn build_symbol_table_recursively(
                 SymbolType::Function(FunctionType {
                     parameter_types,
                     return_type: Some(return_type),
+                    frame_size: 0,
                 }),
             );
             map_stack.insert(identifier.to_string(), index);
             *ast.children_mut()[0].get_symbol_index_mut().unwrap() = index;
             map_stack.push();
+            // only set frame size if it contains any symbols
+            let symbol_count = symbol_table.symbols.len();
             // skip to not build the symbol table for the identifier twice
             for child in ast.children_mut().iter_mut().skip(1) {
                 build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
+            }
+            if symbol_table.symbols.len() > symbol_count {
+                let last_symbol = symbol_table.symbols.last().unwrap();
+                let last_symbol_type = last_symbol.symbol_type.unwrap_variable();
+                // couldn't figure out a better way to satisfy the borrow checker than computing this outside of the branch
+                let new_frame_size = ceil_int(
+                    last_symbol_type.frame_offset + last_symbol_type.variable_type.type_size(),
+                    mem::size_of::<usize>(),
+                );
+                if let SymbolType::Function(FunctionType { frame_size, .. }) =
+                    &mut symbol_table.symbols[index].symbol_type
+                {
+                    *frame_size = new_frame_size;
+                } else {
+                    unreachable!()
+                }
             }
             map_stack.pop();
         }

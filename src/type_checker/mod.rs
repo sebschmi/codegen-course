@@ -122,6 +122,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             if let SymbolType::Function(FunctionType {
                 parameter_types,
                 return_type,
+                ..
             }) = symbol.symbol_type()
             {
                 let argument_count = ast.children().len() - 1;
