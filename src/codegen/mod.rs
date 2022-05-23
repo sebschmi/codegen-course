@@ -51,6 +51,7 @@ void assert(int64_t condition) {
 
 void main() {
 void* stack = malloc(1024 * 1024); // 1 Mib of stack space
+assert(stack != 0);
 // these pointers are assumed to be registers, so we can manipulate them directly without loading or storing
 void* stack_pointer = stack; // points to the address after the top of the stack
 void* frame_pointer = stack; // points to the base of the current stack frame
@@ -251,6 +252,7 @@ fn generate_code_recursively(
         }
         AstNodeKind::VariableDeclaration => {
             // space for variables was created when setting up the stack
+            // TODO malloc arrays
         }
         AstNodeKind::AssignmentStatement => {
             // evaluate rhs, push result onto stack
