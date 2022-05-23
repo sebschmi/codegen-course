@@ -11,15 +11,15 @@ const RUNTIME: &str = r#"
 #include <stdint.h>
 
 void read_integer(int64_t* output) {
-    fscanf(stdin, "%d", output);
+    fscanf(stdin, "%ld", output);
 }
 
 void read_float(double* output) {
-    fscanf(stdin, "%f", output);
+    fscanf(stdin, "%lf", output);
 }
 
 void read_boolean(int64_t* output) {
-    fscanf(stdin, "%d", output);
+    fscanf(stdin, "%ld", output);
 }
 
 void read_string(char** output) {
@@ -28,22 +28,23 @@ void read_string(char** output) {
 }
 
 void write_integer(int64_t output) {
-    fprintf(stdout, "%d\n", output);
+    fprintf(stdout, "%ld\n", output);
 }
 
 void write_float(double output) {
-    fprintf(stdout, "%f\n", output);
+    fprintf(stdout, "%lf\n", output);
 }
 
 void write_boolean(int64_t output) {
-    fprintf(stdout, "%d\n", output);
+    fprintf(stdout, "%ld\n", output);
 }
 
 void write_string(char* output) {
     fprintf(stdout, "%s\n", output);
 }
 
-void assert(int64_t) {
+void assert(int64_t condition) {
+    if (condition) return;
     write_string("assertion error");
     exit(1);
 }
@@ -53,6 +54,11 @@ void* stack = malloc(1024 * 1024); // 1 Mib of stack space
 // these pointers are assumed to be registers, so we can manipulate them directly without loading or storing
 void* stack_pointer = stack; // points to the address after the top of the stack
 void* frame_pointer = stack; // points to the base of the current stack frame
+
+// integer registers
+int64_t r0, r1, r2, r3;
+// float registers
+double f0, f1, f2, f3;
 
 goto l_main; // we use goto to keep everything in the same order as in the input, makes it hopefully easier to debug later
 "#;
@@ -185,7 +191,7 @@ fn generate_code_recursively(
 
             // write return jump table
             writeln!(output, "return_table:")?;
-            writeln!(output, "switch *r1 {{")?;
+            writeln!(output, "switch (r1) {{")?;
             for index in 1..=context.last_return_id {
                 writeln!(output, "case {index}: goto l_return_{index}; break;")?;
             }
@@ -212,22 +218,26 @@ fn generate_code_recursively(
             )?;
 
             // write label for return gotos
-            write!(output, "return_{}", &context.current_function_label)?;
+            write!(output, "{}_return", &context.current_function_label)?;
             writeln!(output, ":")?;
 
             // write return mechanism
-            writeln!(output, "r0 = frame_pointer - {};", mem::size_of::<usize>())?;
-            writeln!(output, "r2 = *r0;")?; // caller frame pointer
             writeln!(
                 output,
-                "r0 = frame_pointer - {};",
+                "r0 = (int64_t) (frame_pointer - {});",
+                mem::size_of::<usize>()
+            )?;
+            writeln!(output, "r2 = *((int64_t*) r0);")?; // caller frame pointer
+            writeln!(
+                output,
+                "r0 = (int64_t) (frame_pointer - {});",
                 2 * mem::size_of::<usize>()
             )?;
-            writeln!(output, "r1 = *r0;")?; // return address
-            writeln!(output, "frame_pointer = r2")?;
-            writeln!(output, "stack_pointer = r0;")?; // return address is the first element between frames
+            writeln!(output, "r1 = *((int64_t*) r0);")?; // return address
+            writeln!(output, "frame_pointer = (void*) r2;")?;
+            writeln!(output, "stack_pointer = (void*) r0;")?; // return address is the first element between frames
             writeln!(output, "r0 = r0 + {};", mem::size_of::<usize>())?; // return value is passed through former location of frame pointer
-            writeln!(output, "*r0 = r3;")?; // return value is stored in r3 before return
+            writeln!(output, "*((int64_t*) r0) = r3;")?; // return value is stored in r3 before return
             writeln!(output, "goto return_table;")?; // jump to jump table for returns
         }
         AstNodeKind::VarParameter | AstNodeKind::ValueParameter => {
@@ -253,14 +263,14 @@ fn generate_code_recursively(
             // perform assignment
             // since we don't do arithmetic, we can perform the assignment through the integer registers in all cases
             pop_int(output, "r1")?;
-            writeln!(output, "*((int64_t*) r0) = r1")?;
+            writeln!(output, "*((int64_t*) r0) = r1;")?;
         }
         AstNodeKind::CallStatement => {
             // push return address (creating a new one)
             context.last_return_id += 1;
             push_int(output, &format!("{}", context.last_return_id))?;
             // push frame pointer
-            push_int(output, "frame_pointer")?;
+            push_int(output, "(int64_t) frame_pointer")?;
 
             // compute parameters (they will be pushed onto the stack one by one, implicitly setting up the stack for the callee)
             for child in ast.children().iter().skip(1) {
@@ -278,8 +288,7 @@ fn generate_code_recursively(
             writeln!(output, ";")?;
 
             // return label for this location
-            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?;
-            writeln!(output, "_return_{}:", context.last_return_id)?;
+            writeln!(output, "l_return_{}:", context.last_return_id)?;
 
             let callee_symbol = symbol_table
                 .get(ast.children()[0].get_symbol_index().unwrap())
@@ -300,7 +309,7 @@ fn generate_code_recursively(
             // return value is stored in r3 before return
             pop_int(output, "r3")?;
             // goto return code
-            writeln!(output, "goto return_{};", context.current_function_label)?;
+            writeln!(output, "goto {}_return;", context.current_function_label)?;
         }
         AstNodeKind::ReadStatement => {
             for child in ast.children().iter().skip(1) {
@@ -312,13 +321,14 @@ fn generate_code_recursively(
                 // read value with correct type
                 writeln!(
                     output,
-                    "read_{}(r0);",
+                    "read_{}(({}*)r0);",
                     match type_name.primitive_type_name() {
                         PrimitiveTypeName::Boolean => "boolean",
                         PrimitiveTypeName::Integer => "integer",
                         PrimitiveTypeName::Real => "float",
                         PrimitiveTypeName::String => "string",
-                    }
+                    },
+                    type_name.primitive_type_name().c_type_name(),
                 )?;
             }
         }
@@ -332,13 +342,14 @@ fn generate_code_recursively(
                 // write value with correct type
                 writeln!(
                     output,
-                    "write_{}(*r0);",
+                    "write_{}(* (({}*)r0));",
                     match type_name.primitive_type_name() {
                         PrimitiveTypeName::Boolean => "boolean",
                         PrimitiveTypeName::Integer => "integer",
                         PrimitiveTypeName::Real => "float",
                         PrimitiveTypeName::String => "string",
-                    }
+                    },
+                    type_name.primitive_type_name().c_type_name(),
                 )?;
             }
         }
