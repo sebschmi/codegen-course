@@ -149,6 +149,7 @@ impl<T: std::io::Write> std::fmt::Write for FmtIoWriteWrapper<T> {
 
 /// Generate code for pushing an integer register value onto the stack.
 fn push_int(output: &mut impl Write, source: &str) -> Result<()> {
+    writeln!(output, "// push_int({source})")?;
     writeln!(output, "*((int64_t*) stack_pointer) = {source};")?;
     writeln!(
         output,
@@ -160,17 +161,19 @@ fn push_int(output: &mut impl Write, source: &str) -> Result<()> {
 
 /// Generate code for popping from the stack into an integer register.
 fn pop_int(output: &mut impl Write, target: &str) -> Result<()> {
-    writeln!(output, "{target} = *((int64_t*) stack_pointer);")?;
+    writeln!(output, "// pop_int({target})")?;
     writeln!(
         output,
         "stack_pointer = stack_pointer - {};",
         mem::size_of::<usize>()
     )?;
+    writeln!(output, "{target} = *((int64_t*) stack_pointer);")?;
     Ok(())
 }
 
 /// Generate code for pushing an integer register value onto the stack.
 fn push_float(output: &mut impl Write, source: &str) -> Result<()> {
+    writeln!(output, "// push_float({source})")?;
     writeln!(output, "*((double*) stack_pointer) = {source};")?;
     writeln!(
         output,
@@ -182,12 +185,13 @@ fn push_float(output: &mut impl Write, source: &str) -> Result<()> {
 
 /// Generate code for popping from the stack into an integer register.
 fn pop_float(output: &mut impl Write, target: &str) -> Result<()> {
-    writeln!(output, "{target} = *((double*) stack_pointer);")?;
+    writeln!(output, "// pop_float({target})")?;
     writeln!(
         output,
         "stack_pointer = stack_pointer - {};",
         mem::size_of::<usize>()
     )?;
+    writeln!(output, "{target} = *((double*) stack_pointer);")?;
     Ok(())
 }
 
@@ -217,6 +221,7 @@ pub fn generate_code(
             current_function_label: "".to_string(),
             current_label_id: 0,
         },
+        false,
     )
     .map(|_| ())
 }
@@ -228,16 +233,30 @@ pub fn generate_code(
 // we assume a stack-based machine, i.e. registers are only used for special computations, but generally temporaries are put onto the stack.
 
 /// This function returns the type of the last value on the stack, if it pushed something.
+///
+/// `indirection` is true if the value returned by an expression or statement should be returned as a pointer to the value, as opposed to the value itself.
+/// This has nothing to do with arrays or var parameters, but is used the left hand side of an assignment or read statement.
 fn generate_code_recursively(
     ast: &AstNode,
     symbol_table: &SymbolTable,
     output: &mut impl Write,
     context: &mut CodeGenerationContext,
+    indirection: bool,
 ) -> Result<Option<TypeName>> {
+    // assert that indirection is only true in the supported cases
+    if indirection {
+        match ast.kind() {
+            AstNodeKind::IndexOperator
+            | AstNodeKind::Identifier { .. }
+            | AstNodeKind::PredefinedIdentifier { .. } => { /* ok */ }
+            other => debug_assert!(false, "{other:?}"), // only check for programming errors in debug mode. there is no debug_panic! macro unfortunately.
+        }
+    }
+
     match ast.kind() {
         AstNodeKind::Program => {
             for child in ast.children().iter().skip(1).rev().skip(1).rev() {
-                generate_code_recursively(child, symbol_table, output, context)?;
+                generate_code_recursively(child, symbol_table, output, context, false)?;
             }
             writeln!(output, "l_main:")?;
             // set up stack for main
@@ -252,7 +271,10 @@ fn generate_code_recursively(
                 symbol_table,
                 output,
                 context,
+                false,
             )?;
+            // cleanup
+            writeln!(output, "free(stack);")?;
             writeln!(output, "return;")?;
 
             // write return jump table
@@ -268,7 +290,13 @@ fn generate_code_recursively(
         AstNodeKind::Procedure | AstNodeKind::Function => {
             // update context
             let mut label = String::new();
-            generate_code_recursively(&ast.children()[0], symbol_table, &mut label, context)?;
+            generate_code_recursively(
+                &ast.children()[0],
+                symbol_table,
+                &mut label,
+                context,
+                false,
+            )?;
             context.current_function_label = label;
 
             // our calling convention is that the caller sets up the stack for the callee
@@ -281,6 +309,7 @@ fn generate_code_recursively(
                 symbol_table,
                 output,
                 context,
+                false,
             )?;
 
             // write label for return gotos
@@ -312,7 +341,7 @@ fn generate_code_recursively(
         AstNodeKind::Block => {
             // we do not alter the stack within function execution, so nothing special about blocks
             for child in ast.children() {
-                generate_code_recursively(child, symbol_table, output, context)?;
+                generate_code_recursively(child, symbol_table, output, context, false)?;
             }
         }
         AstNodeKind::VariableDeclaration => {
@@ -326,6 +355,7 @@ fn generate_code_recursively(
                     symbol_table,
                     output,
                     context,
+                    false,
                 )?;
                 pop_int(output, "r0")?;
                 // compute required memory
@@ -352,10 +382,10 @@ fn generate_code_recursively(
         }
         AstNodeKind::AssignmentStatement => {
             // evaluate rhs, push result onto stack
-            generate_code_recursively(&ast.children()[1], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[1], symbol_table, output, context, false)?;
 
             let lhs = &ast.children()[0];
-            generate_code_recursively(lhs, symbol_table, output, context)?;
+            generate_code_recursively(lhs, symbol_table, output, context, true)?;
             pop_int(output, "r0")?;
 
             // perform assignment
@@ -372,7 +402,7 @@ fn generate_code_recursively(
 
             // compute parameters (they will be pushed onto the stack one by one, implicitly setting up the stack for the callee)
             for child in ast.children().iter().skip(1) {
-                generate_code_recursively(child, symbol_table, output, context)?;
+                generate_code_recursively(child, symbol_table, output, context, false)?;
             }
             // set up callee frame
             writeln!(
@@ -382,7 +412,7 @@ fn generate_code_recursively(
             )?;
             // jump to callee
             write!(output, "goto ")?;
-            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[0], symbol_table, output, context, false)?;
             writeln!(output, ";")?;
 
             // return label for this location
@@ -403,7 +433,7 @@ fn generate_code_recursively(
             }
         }
         AstNodeKind::ReturnStatement => {
-            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[0], symbol_table, output, context, false)?;
             // return value is stored in r3 before return
             pop_int(output, "r3")?;
             // goto return code
@@ -413,7 +443,7 @@ fn generate_code_recursively(
             for child in ast.children().iter().skip(1) {
                 // generate target address
                 let type_name =
-                    generate_code_recursively(child, symbol_table, output, context)?.unwrap();
+                    generate_code_recursively(child, symbol_table, output, context, true)?.unwrap();
                 pop_int(output, "r0")?;
 
                 // read value with correct type
@@ -434,13 +464,14 @@ fn generate_code_recursively(
             for child in ast.children().iter().skip(1) {
                 // generate target address
                 let type_name =
-                    generate_code_recursively(child, symbol_table, output, context)?.unwrap();
+                    generate_code_recursively(child, symbol_table, output, context, false)?
+                        .unwrap();
                 pop_int(output, "r0")?;
 
                 // write value with correct type
                 writeln!(
                     output,
-                    "write_{}(* (({}*)r0));",
+                    "write_{}((({})r0));",
                     match type_name.primitive_type_name() {
                         PrimitiveTypeName::Boolean => "boolean",
                         PrimitiveTypeName::Integer => "integer",
@@ -453,7 +484,8 @@ fn generate_code_recursively(
         }
         AstNodeKind::AssertStatement => {
             // evaluate assertion
-            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?.unwrap();
+            generate_code_recursively(&ast.children()[0], symbol_table, output, context, false)?
+                .unwrap();
             pop_int(output, "r0")?;
             // test assertion
             writeln!(output, "assert(r0)")?;
@@ -464,13 +496,13 @@ fn generate_code_recursively(
             context.current_label_id += 1;
 
             // evaluate condition
-            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[0], symbol_table, output, context, false)?;
             pop_int(output, "r0")?;
             // test condition
             writeln!(output, "if (!r0) goto {else_label};")?;
 
             // evaluate then branch
-            generate_code_recursively(&ast.children()[1], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[1], symbol_table, output, context, false)?;
             // skip over else
             writeln!(output, "goto {after_label};")?;
 
@@ -479,7 +511,13 @@ fn generate_code_recursively(
 
             if ast.children().len() == 3 {
                 // evaluate else branch if exists
-                generate_code_recursively(&ast.children()[2], symbol_table, output, context)?;
+                generate_code_recursively(
+                    &ast.children()[2],
+                    symbol_table,
+                    output,
+                    context,
+                    false,
+                )?;
             }
             // write after label
             writeln!(output, "{after_label}:")?;
@@ -492,13 +530,13 @@ fn generate_code_recursively(
             // write while label
             writeln!(output, "{while_label}:")?;
             // evaluate condition
-            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[0], symbol_table, output, context, false)?;
             pop_int(output, "r0")?;
             // test condition
             writeln!(output, "if (!r0) goto {after_label};")?;
 
             // evaluate loop body
-            generate_code_recursively(&ast.children()[1], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[1], symbol_table, output, context, false)?;
             // jump back to condition
             writeln!(output, "goto {while_label};")?;
 
@@ -519,11 +557,16 @@ fn generate_code_recursively(
         | AstNodeKind::ModOperator
         | AstNodeKind::AndOperator) => {
             // evaluate left side
-            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[0], symbol_table, output, context, false)?;
             // evaluate right side (since we did type checking, the input type is uniquely determined by one of the arguments)
-            let input_type_name =
-                generate_code_recursively(&ast.children()[1], symbol_table, output, context)?
-                    .unwrap();
+            let input_type_name = generate_code_recursively(
+                &ast.children()[1],
+                symbol_table,
+                output,
+                context,
+                false,
+            )?
+            .unwrap();
             let input_type_name = input_type_name.primitive_type_name();
             // float special case
             let registers = if input_type_name == &PrimitiveTypeName::Real {
@@ -602,9 +645,14 @@ fn generate_code_recursively(
         }
         unary_operator @ (AstNodeKind::NegOperator | AstNodeKind::NotOperator) => {
             // evaluate inner
-            let input_type_name =
-                generate_code_recursively(&ast.children()[0], symbol_table, output, context)?
-                    .unwrap();
+            let input_type_name = generate_code_recursively(
+                &ast.children()[0],
+                symbol_table,
+                output,
+                context,
+                false,
+            )?
+            .unwrap();
             let input_type_name = input_type_name.primitive_type_name();
             // float special case
             let registers = if input_type_name == &PrimitiveTypeName::Real {
@@ -660,7 +708,7 @@ fn generate_code_recursively(
         }
         AstNodeKind::IndexOperator => {
             // evaluate index
-            generate_code_recursively(&ast.children()[1], symbol_table, output, context)?;
+            generate_code_recursively(&ast.children()[1], symbol_table, output, context, false)?;
             pop_int(output, "r1")?;
 
             // calculate pointer into array
@@ -686,6 +734,10 @@ fn generate_code_recursively(
                 "r0 = (int64_t) ((({}) r0) + r1);",
                 array_symbol_type.variable_type.c_type_name()
             )?;
+            // remove indirection if required
+            if !indirection {
+                writeln!(output, "r0 = *((int64_t*) r0);")?;
+            }
             push_int(output, "r0")?;
             return Ok(Some(array_symbol_type.variable_type.clone()));
         }
@@ -705,8 +757,16 @@ fn generate_code_recursively(
                 primitive_type: literal_type.clone(),
             }));
         }
-        AstNodeKind::Identifier { symbol_index, .. }
-        | AstNodeKind::PredefinedIdentifier { symbol_index, .. } => {
+        AstNodeKind::Identifier {
+            symbol_index,
+            lower_case,
+            ..
+        }
+        | AstNodeKind::PredefinedIdentifier {
+            symbol_index,
+            lower_case,
+            ..
+        } => {
             let symbol = symbol_table.get(*symbol_index).unwrap();
             let identifier = symbol.name();
             match symbol.symbol_type() {
@@ -715,13 +775,18 @@ fn generate_code_recursively(
                     write!(output, "l_f{symbol_index}_{identifier}")?;
                 }
                 SymbolType::Variable(variable_symbol_type) => {
-                    // variable access, return a pointer to the variable
+                    // variable access, return a pointer to the variable if indirection is true, and the value otherwise
+                    // for e.g. arrays or strings this still means that a pointer is returned
+                    writeln!(output, "// variable access '{lower_case}'")?;
                     writeln!(
                         output,
                         "r0 = ((int64_t) (frame_pointer + {}));",
                         variable_symbol_type.frame_offset
                     )?;
                     if variable_symbol_type.var {
+                        writeln!(output, "r0 = *((int64_t*) r0);")?;
+                    }
+                    if !indirection {
                         writeln!(output, "r0 = *((int64_t*) r0);")?;
                     }
                     push_int(output, "r0")?;
