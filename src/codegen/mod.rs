@@ -49,6 +49,71 @@ void assert(int64_t condition) {
     exit(1);
 }
 
+int64_t string_eq(char* a, char* b) {
+    for (uint64_t i = 0; ; i++) {
+        if (a[i] != b[i]) return false;
+        if (a[i] == 0) return true;
+    }
+    assert(0);
+}
+
+int64_t string_neq(char* a, char* b) {
+    for (uint64_t i = 0; ; i++) {
+        if (a[i] != b[i]) return true;
+        if (a[i] == 0) return false;
+    }
+    assert(0);
+}
+
+// lexicographic ordering of strings, prefixes are shorter than the original
+int64_t string_leq(char* a, char* b) {
+    for (uint64_t i = 0; ; i++) {
+        if (a[i] > b[i]) return false;
+        if (a[i] < b[i]) return true;
+        if (a[i] == 0) return true;
+    }
+    assert(0);
+}
+
+int64_t string_geq(char* a, char* b) {
+    for (uint64_t i = 0; ; i++) {
+        if (a[i] < b[i]) return false;
+        if (a[i] > b[i]) return true;
+        if (a[i] == 0) return true;
+    }
+    assert(0);
+}
+
+int64_t string_lt(char* a, char* b) {
+    for (uint64_t i = 0; ; i++) {
+        if (a[i] > b[i]) return false;
+        if (a[i] < b[i]) return true;
+        if (a[i] == 0) return false;
+    }
+    assert(0);
+}
+
+int64_t string_gt(char* a, char* b) {
+    for (uint64_t i = 0; ; i++) {
+        if (a[i] < b[i]) return false;
+        if (a[i] > b[i]) return true;
+        if (a[i] == 0) return false;
+    }
+    assert(0);
+}
+
+char* string_concat(char* a, char* b) {
+    uint64_t len_a;
+    for (len_a = 0; a[len_a] != 0; len_a++);
+    uint64_t len_b;
+    for (len_b = 0; b[len_b] != 0; len_b++);
+    char* result = malloc(len_a + len_b + 1);
+    assert(result != 0);
+    for (uint64_t i = 0; i < len_a; i++) result[i] = a[i];
+    for (uint64_t i = 0; i < len_b; i++) result[len_a + i] = b[i];
+    return result;
+}
+
 void main() {
 void* stack = malloc(1024 * 1024); // 1 Mib of stack space
 assert(stack != 0);
@@ -252,7 +317,38 @@ fn generate_code_recursively(
         }
         AstNodeKind::VariableDeclaration => {
             // space for variables was created when setting up the stack
-            // TODO malloc arrays
+            // unsized arrays cannot be allocated since the size is not known
+            let variable_type = ast.get_variable_type();
+            if let TypeName::SizedArray { .. } = variable_type {
+                // evaluate array length
+                generate_code_recursively(
+                    &ast.children().last().unwrap().children()[0],
+                    symbol_table,
+                    output,
+                    context,
+                )?;
+                pop_int(output, "r0")?;
+                // compute required memory
+                writeln!(output, "r2 = r0 + 1;")?;
+                writeln!(output, "r2 = r2 * {};", mem::size_of::<usize>())?;
+
+                for child in ast.children().iter().rev().skip(1).rev() {
+                    // allocate
+                    writeln!(output, "r1 = (int64_t) malloc(r2);")?;
+                    // store length
+                    writeln!(output, "*((int64_t*) r1) = (int64_t) r0;")?;
+                    // store pointer
+                    let symbol_index = child.get_symbol_index().unwrap();
+                    let symbol = symbol_table.get(symbol_index).unwrap();
+                    let variable_type = symbol.symbol_type().unwrap_variable();
+                    writeln!(
+                        output,
+                        "r2 = (int64_t) (frame_pointer + {});",
+                        variable_type.frame_offset
+                    )?;
+                    writeln!(output, "*((int64_t*) r2) = r1;")?;
+                }
+            }
         }
         AstNodeKind::AssignmentStatement => {
             // evaluate rhs, push result onto stack
@@ -409,22 +505,159 @@ fn generate_code_recursively(
             // write after label
             writeln!(output, "{after_label}:")?;
         }
-        AstNodeKind::EqOperator => { /* TODO */ }
-        AstNodeKind::NeqOperator => { /* TODO */ }
-        AstNodeKind::LtOperator => { /* TODO */ }
-        AstNodeKind::LeqOperator => { /* TODO */ }
-        AstNodeKind::GeqOperator => { /* TODO */ }
-        AstNodeKind::GtOperator => { /* TODO */ }
-        AstNodeKind::NegOperator => { /* TODO */ }
-        AstNodeKind::AddOperator => { /* TODO */ }
-        AstNodeKind::SubOperator => { /* TODO */ }
-        AstNodeKind::OrOperator => { /* TODO */ }
-        AstNodeKind::NotOperator => { /* TODO */ }
-        AstNodeKind::MulOperator => { /* TODO */ }
-        AstNodeKind::DivOperator => { /* TODO */ }
-        AstNodeKind::ModOperator => { /* TODO */ }
-        AstNodeKind::AndOperator => { /* TODO */ }
-        AstNodeKind::DotOperator => { /* TODO */ }
+        binary_operator @ (AstNodeKind::EqOperator
+        | AstNodeKind::NeqOperator
+        | AstNodeKind::LtOperator
+        | AstNodeKind::LeqOperator
+        | AstNodeKind::GeqOperator
+        | AstNodeKind::GtOperator
+        | AstNodeKind::AddOperator
+        | AstNodeKind::SubOperator
+        | AstNodeKind::OrOperator
+        | AstNodeKind::MulOperator
+        | AstNodeKind::DivOperator
+        | AstNodeKind::ModOperator
+        | AstNodeKind::AndOperator) => {
+            // evaluate left side
+            generate_code_recursively(&ast.children()[0], symbol_table, output, context)?;
+            // evaluate right side (since we did type checking, the input type is uniquely determined by one of the arguments)
+            let input_type_name =
+                generate_code_recursively(&ast.children()[1], symbol_table, output, context)?
+                    .unwrap();
+            let input_type_name = input_type_name.primitive_type_name();
+            // float special case
+            let registers = if input_type_name == &PrimitiveTypeName::Real {
+                pop_float(output, "f1")?;
+                pop_float(output, "f0")?;
+                "f"
+            } else {
+                pop_int(output, "r1")?;
+                pop_int(output, "r0")?;
+                "r"
+            };
+
+            if input_type_name == &PrimitiveTypeName::String {
+                let runtime_function = match binary_operator {
+                    AstNodeKind::EqOperator => "eq",
+                    AstNodeKind::NeqOperator => "neq",
+                    AstNodeKind::LtOperator => "lt",
+                    AstNodeKind::LeqOperator => "leq",
+                    AstNodeKind::GeqOperator => "geq",
+                    AstNodeKind::GtOperator => "gt",
+                    AstNodeKind::AddOperator => "concat",
+                    other => unreachable!("{other:?}"),
+                };
+                writeln!(output, "r0 = string_{runtime_function}(r0, r1);")?;
+            } else {
+                // get c operator
+                let operator = match binary_operator {
+                    AstNodeKind::EqOperator => "==",
+                    AstNodeKind::NeqOperator => "!=",
+                    AstNodeKind::LtOperator => "<",
+                    AstNodeKind::LeqOperator => "<=",
+                    AstNodeKind::GeqOperator => ">=",
+                    AstNodeKind::GtOperator => ">",
+                    AstNodeKind::AddOperator => "+",
+                    AstNodeKind::SubOperator => "-",
+                    AstNodeKind::OrOperator => "|",
+                    AstNodeKind::MulOperator => "*",
+                    AstNodeKind::DivOperator => "/",
+                    AstNodeKind::ModOperator => "%",
+                    AstNodeKind::AndOperator => "&",
+                    other => unreachable!("{other:?}"),
+                };
+
+                // perform operation
+                writeln!(
+                    output,
+                    "{registers}0 = {registers}0 {operator} {registers}1;"
+                )?;
+            }
+            // store result
+            if input_type_name == &PrimitiveTypeName::Real {
+                push_float(output, "f0")?;
+            } else {
+                push_int(output, "r0")?;
+            }
+
+            let return_type = match binary_operator {
+                AstNodeKind::EqOperator
+                | AstNodeKind::NeqOperator
+                | AstNodeKind::LtOperator
+                | AstNodeKind::LeqOperator
+                | AstNodeKind::GeqOperator
+                | AstNodeKind::GtOperator => PrimitiveTypeName::Boolean,
+                AstNodeKind::AddOperator
+                | AstNodeKind::SubOperator
+                | AstNodeKind::OrOperator
+                | AstNodeKind::MulOperator
+                | AstNodeKind::DivOperator
+                | AstNodeKind::ModOperator
+                | AstNodeKind::AndOperator => input_type_name.clone(),
+                other => unreachable!("{other:?}"),
+            };
+            return Ok(Some(TypeName::Primitive {
+                primitive_type: return_type,
+            }));
+        }
+        unary_operator @ (AstNodeKind::NegOperator | AstNodeKind::NotOperator) => {
+            // evaluate inner
+            let input_type_name =
+                generate_code_recursively(&ast.children()[0], symbol_table, output, context)?
+                    .unwrap();
+            let input_type_name = input_type_name.primitive_type_name();
+            // float special case
+            let registers = if input_type_name == &PrimitiveTypeName::Real {
+                pop_float(output, "f0")?;
+                "f"
+            } else {
+                pop_int(output, "r0")?;
+                "r"
+            };
+
+            // get c operator
+            let operator = match unary_operator {
+                AstNodeKind::NotOperator => "~",
+                AstNodeKind::NegOperator => "-",
+                other => unreachable!("{other:?}"),
+            };
+
+            // perform operation
+            writeln!(output, "{registers}0 = {operator} {registers}0;")?;
+            // store result
+            if input_type_name == &PrimitiveTypeName::Real {
+                push_float(output, "f0")?;
+            } else {
+                push_int(output, "r0")?;
+            }
+
+            return Ok(Some(TypeName::Primitive {
+                primitive_type: input_type_name.clone(),
+            }));
+        }
+        AstNodeKind::DotOperator => {
+            // calculate pointer into array
+            let array_symbol = symbol_table
+                .get(ast.children()[0].get_symbol_index().unwrap())
+                .unwrap();
+            let array_symbol_type = array_symbol.symbol_type().unwrap_variable();
+            // get array symbol position on stack
+            writeln!(
+                output,
+                "r0 = ((int64_t) (frame_pointer + {}));",
+                array_symbol_type.frame_offset
+            )?;
+            // vars have one more step of indirection
+            if array_symbol_type.var {
+                writeln!(output, "r0 = *((int64_t*) r0);")?;
+            }
+            // index into array at position zero where the length is stored
+            writeln!(output, "r0 = *((int64_t*) r0);")?;
+            push_int(output, "r0")?;
+            return Ok(Some(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Integer,
+            }));
+        }
         AstNodeKind::IndexOperator => {
             // evaluate index
             generate_code_recursively(&ast.children()[1], symbol_table, output, context)?;
@@ -435,14 +668,19 @@ fn generate_code_recursively(
                 .get(ast.children()[0].get_symbol_index().unwrap())
                 .unwrap();
             let array_symbol_type = array_symbol.symbol_type().unwrap_variable();
+            // get array symbol position on stack
             writeln!(
                 output,
                 "r0 = ((int64_t) (frame_pointer + {}));",
                 array_symbol_type.frame_offset
             )?;
+            // vars have one more step of indirection
             if array_symbol_type.var {
                 writeln!(output, "r0 = *((int64_t*) r0);")?;
             }
+            // skip zero element of array
+            writeln!(output, "r0 = r0 + 1;")?;
+            // index into array
             writeln!(
                 output,
                 "r0 = (int64_t) ((({}) r0) + r1);",

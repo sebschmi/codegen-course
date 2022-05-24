@@ -159,6 +159,7 @@ impl Symbol {
         &self.name
     }
 
+    /// Returns the index of this symbol in the symbol table.
     pub fn index(&self) -> usize {
         self.index
     }
@@ -187,6 +188,8 @@ impl SymbolType {
         }
     }
 
+    /// Assume that this [SymbolType] is a variable, and return the corresponding [VariableSymbolType].
+    /// Panics if the [SymbolType] is anything else.
     pub fn unwrap_variable(&self) -> &VariableSymbolType {
         if let SymbolType::Variable(result) = self {
             result
