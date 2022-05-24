@@ -51,16 +51,16 @@ void assert(int64_t condition) {
 
 int64_t string_eq(char* a, char* b) {
     for (uint64_t i = 0; ; i++) {
-        if (a[i] != b[i]) return false;
-        if (a[i] == 0) return true;
+        if (a[i] != b[i]) return 0;
+        if (a[i] == 0) return 1;
     }
     assert(0);
 }
 
 int64_t string_neq(char* a, char* b) {
     for (uint64_t i = 0; ; i++) {
-        if (a[i] != b[i]) return true;
-        if (a[i] == 0) return false;
+        if (a[i] != b[i]) return 1;
+        if (a[i] == 0) return 0;
     }
     assert(0);
 }
@@ -68,36 +68,36 @@ int64_t string_neq(char* a, char* b) {
 // lexicographic ordering of strings, prefixes are shorter than the original
 int64_t string_leq(char* a, char* b) {
     for (uint64_t i = 0; ; i++) {
-        if (a[i] > b[i]) return false;
-        if (a[i] < b[i]) return true;
-        if (a[i] == 0) return true;
+        if (a[i] > b[i]) return 0;
+        if (a[i] < b[i]) return 1;
+        if (a[i] == 0) return 1;
     }
     assert(0);
 }
 
 int64_t string_geq(char* a, char* b) {
     for (uint64_t i = 0; ; i++) {
-        if (a[i] < b[i]) return false;
-        if (a[i] > b[i]) return true;
-        if (a[i] == 0) return true;
+        if (a[i] < b[i]) return 0;
+        if (a[i] > b[i]) return 1;
+        if (a[i] == 0) return 1;
     }
     assert(0);
 }
 
 int64_t string_lt(char* a, char* b) {
     for (uint64_t i = 0; ; i++) {
-        if (a[i] > b[i]) return false;
-        if (a[i] < b[i]) return true;
-        if (a[i] == 0) return false;
+        if (a[i] > b[i]) return 0;
+        if (a[i] < b[i]) return 1;
+        if (a[i] == 0) return 0;
     }
     assert(0);
 }
 
 int64_t string_gt(char* a, char* b) {
     for (uint64_t i = 0; ; i++) {
-        if (a[i] < b[i]) return false;
-        if (a[i] > b[i]) return true;
-        if (a[i] == 0) return false;
+        if (a[i] < b[i]) return 0;
+        if (a[i] > b[i]) return 1;
+        if (a[i] == 0) return 0;
     }
     assert(0);
 }
