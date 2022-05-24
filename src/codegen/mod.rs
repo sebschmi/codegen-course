@@ -404,11 +404,21 @@ fn generate_code_recursively(
             for child in ast.children().iter().skip(1) {
                 generate_code_recursively(child, symbol_table, output, context, false)?;
             }
-            // set up callee frame
+            // set up callee frame pointer
             writeln!(
                 output,
                 "frame_pointer = stack_pointer - {};",
                 (ast.children().len() - 1) * 8
+            )?;
+            // set up callee stack pointer
+            let callee_symbol = symbol_table
+                .get(ast.children()[0].get_symbol_index().unwrap())
+                .unwrap();
+            let callee_type = callee_symbol.symbol_type().unwrap_function();
+            writeln!(
+                output,
+                "stack_pointer = frame_pointer + {};",
+                callee_type.frame_size
             )?;
             // jump to callee
             write!(output, "goto ")?;
@@ -418,18 +428,10 @@ fn generate_code_recursively(
             // return label for this location
             writeln!(output, "l_return_{}:", context.last_return_id)?;
 
-            let callee_symbol = symbol_table
-                .get(ast.children()[0].get_symbol_index().unwrap())
-                .unwrap();
-            match callee_symbol.symbol_type() {
-                SymbolType::Function(function_type) => {
-                    if function_type.return_type.is_some() {
-                        // push return value onto stack (ignore given return value on stack, we can just use the one from r3)
-                        push_int(output, "r3")?;
-                        return Ok(function_type.return_type.clone());
-                    }
-                }
-                other => unreachable!("{other:?}"),
+            if callee_type.return_type.is_some() {
+                // push return value onto stack (ignore given return value on stack, we can just use the one from r3)
+                push_int(output, "r3")?;
+                return Ok(callee_type.return_type.clone());
             }
         }
         AstNodeKind::ReturnStatement => {

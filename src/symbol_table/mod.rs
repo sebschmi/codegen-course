@@ -197,6 +197,16 @@ impl SymbolType {
             panic!("Not a variable: {self:?}");
         }
     }
+
+    /// Assume that this [SymbolType] is a function, and return the corresponding [FunctionType].
+    /// Panics if the [SymbolType] is anything else.
+    pub fn unwrap_function(&self) -> &FunctionType {
+        if let SymbolType::Function(result) = self {
+            result
+        } else {
+            panic!("Not a function: {self:?}");
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone)]
