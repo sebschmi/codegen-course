@@ -9,7 +9,7 @@ begin
     var pair: array[3] of string;
     read(pair[0]);
     read(pair[1]);
-    pair[2] := "abc::%{*l";
+    pair[2] := "abc::%\"{*l";
 
     var result: string;
     result := concat(pair[0], pair[1]);
