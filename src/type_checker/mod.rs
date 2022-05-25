@@ -179,7 +179,10 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                             ));
                         }
                         if expected_type.unwrap_variable().var && child_type.is_value() {
-                            return Err(static_error(ast.interval().clone(), StaticErrorKind::ExpectedVariable {actual: child_type}));
+                            return Err(static_error(
+                                ast.interval().clone(),
+                                StaticErrorKind::ExpectedVariable { actual: child_type },
+                            ));
                         }
                     } else {
                         return Err(static_error(

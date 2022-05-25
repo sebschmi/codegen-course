@@ -115,7 +115,7 @@ char* string_concat(char* a, char* b) {
 }
 
 void main() {
-void* stack = malloc(1024 * 1024); // 1 Mib of stack space
+void* stack = aligned_alloc(16, 1024 * 1024); // 1 Mib of stack space, align to 16 bytes to make sure that it works for all sizes of usize
 assert(stack != 0);
 // these pointers are assumed to be registers, so we can manipulate them directly without loading or storing
 void* stack_pointer = stack; // points to the address after the top of the stack
@@ -364,7 +364,11 @@ fn generate_code_recursively(
 
                 for child in ast.children().iter().rev().skip(1).rev() {
                     // allocate
-                    writeln!(output, "r1 = (int64_t) malloc(r2);")?;
+                    writeln!(
+                        output,
+                        "r1 = (int64_t) aligned_alloc({}, r2);",
+                        mem::size_of::<usize>()
+                    )?;
                     // store length
                     writeln!(output, "*((int64_t*) r1) = (int64_t) r0;")?;
                     // store pointer
@@ -715,14 +719,16 @@ fn generate_code_recursively(
             }));
         }
         AstNodeKind::IndexOperator => {
+            let array_symbol = symbol_table
+                .get(ast.children()[0].get_symbol_index().unwrap())
+                .unwrap();
+            writeln!(output, "// array indexing {}", array_symbol.name())?;
+
             // evaluate index
             generate_code_recursively(&ast.children()[1], symbol_table, output, context, false)?;
             pop_int(output, "r1")?;
 
             // calculate pointer into array
-            let array_symbol = symbol_table
-                .get(ast.children()[0].get_symbol_index().unwrap())
-                .unwrap();
             let array_symbol_type = array_symbol.symbol_type().unwrap_variable();
             // get array symbol position on stack
             writeln!(
@@ -730,18 +736,18 @@ fn generate_code_recursively(
                 "r0 = ((int64_t) (frame_pointer + {}));",
                 array_symbol_type.frame_offset
             )?;
+            // retrieve the pointer from the stack
+            writeln!(output, "r0 = *((int64_t*) r0);")?;
             // vars have one more step of indirection
             if array_symbol_type.var {
                 writeln!(output, "r0 = *((int64_t*) r0);")?;
             }
             // skip zero element of array
-            writeln!(output, "r0 = r0 + 1;")?;
+            writeln!(output, "r1 = r1 + 1;")?;
+            // multiply by type size
+            writeln!(output, "r1 = r1 * {};", mem::size_of::<usize>())?;
             // index into array
-            writeln!(
-                output,
-                "r0 = (int64_t) ((({}) r0) + r1);",
-                array_symbol_type.variable_type.c_type_name()
-            )?;
+            writeln!(output, "r0 = r0 + r1;")?;
             // remove indirection if required
             if !indirection {
                 writeln!(output, "r0 = *((int64_t*) r0);")?;
