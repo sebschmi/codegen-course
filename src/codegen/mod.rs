@@ -742,6 +742,12 @@ fn generate_code_recursively(
             if array_symbol_type.var {
                 writeln!(output, "r0 = *((int64_t*) r0);")?;
             }
+            // get length
+            writeln!(output, "r2 = *((int64_t*) r0);")?;
+            // assert that length is valid
+            writeln!(output, "assert(r1 >= 0);")?;
+            writeln!(output, "assert(r1 < r2);")?;
+
             // skip zero element of array
             writeln!(output, "r1 = r1 + 1;")?;
             // multiply by type size
