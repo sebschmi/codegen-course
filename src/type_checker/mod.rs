@@ -54,7 +54,14 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 SymbolType::Empty
             };
             trace!("return_type: {return_type:?}; expected_return_type: {expected_return_type:?}");
-            if !return_type.equals_ignore_var_and_offset(&expected_return_type) {
+            let error =
+                if return_type == SymbolType::Empty || expected_return_type == SymbolType::Empty {
+                    return_type != expected_return_type
+                } else {
+                    return_type.get_variable_or_value_type_name()
+                        != expected_return_type.get_variable_or_value_type_name()
+                };
+            if error {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -75,7 +82,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 if let Some(alternate_return_type) = type_check_recursively(child, symbol_table)? {
                     trace!("statement_return_type: {alternate_return_type:?}");
                     if let Some(return_type) = return_type.as_ref() {
-                        if !return_type.equals_ignore_var_and_offset(&alternate_return_type) {
+                        if return_type.get_variable_or_value_type_name()
+                            != alternate_return_type.get_variable_or_value_type_name()
+                        {
                             return Err(static_error(
                                 ast.interval().clone(),
                                 StaticErrorKind::TypeMismatch {
@@ -91,18 +100,34 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 }
             }
             trace!("block_return_type: {return_type:?}");
-            return_type
+            return_type.map(|symbol_type| {
+                if symbol_type == SymbolType::Empty {
+                    symbol_type
+                } else {
+                    symbol_type.variable_into_value()
+                }
+            })
         }
         AssignmentStatement => {
             let assignee_type = type_check_recursively(&ast.children()[0], symbol_table)?;
             let value_type = type_check_recursively(&ast.children()[1], symbol_table)?;
             if let (Some(assignee_type), Some(value_type)) = (assignee_type, value_type) {
-                if !assignee_type.equals_ignore_var_and_offset(&value_type) {
+                if assignee_type.get_variable_or_value_type_name()
+                    != value_type.get_variable_or_value_type_name()
+                {
                     return Err(static_error(
                         ast.interval().clone(),
                         StaticErrorKind::TypeMismatch {
                             expected: assignee_type,
                             actual: value_type,
+                        },
+                    ));
+                }
+                if !assignee_type.is_variable() {
+                    return Err(static_error(
+                        ast.interval().clone(),
+                        StaticErrorKind::ExpectedVariable {
+                            actual: assignee_type,
                         },
                     ));
                 }
@@ -139,14 +164,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 for (child, expected_type) in
                     ast.children().iter().skip(1).zip(parameter_types.iter())
                 {
-                    let expected_type = SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 0,
-                        var: false,
-                        variable_type: expected_type.clone(),
-                    });
+                    let expected_type = SymbolType::Variable(expected_type.clone());
                     let child_type = type_check_recursively(child, symbol_table)?;
                     if let Some(child_type) = child_type {
-                        if !expected_type.equals_ignore_var_and_offset(&child_type) {
+                        if expected_type.get_variable_or_value_type_name()
+                            != child_type.get_variable_or_value_type_name()
+                        {
                             return Err(static_error(
                                 ast.interval().clone(),
                                 StaticErrorKind::TypeMismatch {
@@ -154,6 +177,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                                     actual: child_type,
                                 },
                             ));
+                        }
+                        if expected_type.unwrap_variable().var && child_type.is_value() {
+                            return Err(static_error(ast.interval().clone(), StaticErrorKind::ExpectedVariable {actual: child_type}));
                         }
                     } else {
                         return Err(static_error(
@@ -163,13 +189,8 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     }
                 }
 
-                return_type.clone().map(|type_name| {
-                    SymbolType::Variable(VariableSymbolType {
-                        frame_offset: 0,
-                        var: false,
-                        variable_type: type_name,
-                    })
-                })
+                // returns are always values
+                return_type.clone().map(SymbolType::Value)
             } else {
                 return Err(static_error(
                     ast.interval().clone(),
@@ -188,7 +209,8 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 // a different type than nothing was expected.
                 Some(SymbolType::Empty)
             } else {
-                result
+                // returns are always values
+                result.map(|symbol_type| symbol_type.variable_into_value())
             }
         }
         ReadStatement => {
@@ -241,7 +263,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
         WriteStatement => {
             for child in ast.children().iter().skip(1) {
                 let child_type = type_check_recursively(child, symbol_table)?;
-                if let Some(SymbolType::Variable(_)) = child_type {
+                if let Some(SymbolType::Variable(_) | SymbolType::Value(_)) = child_type {
                     /* ok */
                 } else {
                     return Err(static_error(
@@ -261,6 +283,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                         primitive_type: PrimitiveTypeName::Boolean,
                     },
                 ..
+            })
+            | SymbolType::Value(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Boolean,
             }) = condition_type
             {
                 let mut if_while_type = type_check_recursively(&ast.children()[1], symbol_table)?;
@@ -269,7 +294,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     let else_type = type_check_recursively(&ast.children()[2], symbol_table)?;
                     if let Some(if_while_type) = &if_while_type {
                         if let Some(else_type) = else_type {
-                            if !if_while_type.equals_ignore_var_and_offset(&else_type) {
+                            if if_while_type.get_variable_or_value_type_name()
+                                != else_type.get_variable_or_value_type_name()
+                            {
                                 return Err(static_error(
                                     ast.interval().clone(),
                                     StaticErrorKind::TypeMismatch {
@@ -285,16 +312,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 }
                 if_while_type
             } else {
-                // expecting a non-var type here, but we actually do not care if it is var or not
+                // expecting a value here, but it could also be a variable
                 return Err(static_error(
                     ast.children()[0].interval().clone(),
                     StaticErrorKind::TypeMismatch {
-                        expected: SymbolType::Variable(VariableSymbolType {
-                            frame_offset: 0,
-                            var: false,
-                            variable_type: TypeName::Primitive {
-                                primitive_type: PrimitiveTypeName::Boolean,
-                            },
+                        expected: SymbolType::Value(TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Boolean,
                         }),
                         actual: condition_type,
                     },
@@ -309,7 +332,8 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             if let SymbolType::Variable(VariableSymbolType {
                 variable_type: TypeName::Primitive { .. },
                 ..
-            }) = &first_type
+            })
+            | SymbolType::Value(TypeName::Primitive { .. }) = &first_type
             {
                 /* ok */
             } else {
@@ -318,7 +342,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
                 ));
             }
-            if !first_type.equals_ignore_var_and_offset(&second_type) {
+            if first_type.get_variable_or_value_type_name()
+                != second_type.get_variable_or_value_type_name()
+            {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -327,12 +353,8 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            Some(SymbolType::Variable(VariableSymbolType {
-                frame_offset: 0,
-                var: false,
-                variable_type: TypeName::Primitive {
-                    primitive_type: PrimitiveTypeName::Boolean,
-                },
+            Some(SymbolType::Value(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Boolean,
             }))
         }
         NegOperator => {
@@ -341,7 +363,8 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             if let SymbolType::Variable(VariableSymbolType {
                 variable_type: TypeName::Primitive { primitive_type },
                 ..
-            }) = &child_type
+            })
+            | SymbolType::Value(TypeName::Primitive { primitive_type }) = &child_type
             {
                 if primitive_type == &PrimitiveTypeName::Integer
                     || primitive_type == &PrimitiveTypeName::Real
@@ -354,7 +377,6 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     ));
                 }
             } else {
-                // expecting a non-var type here, but we actually do not care if it is var or not
                 return Err(static_error(
                     ast.children()[0].interval().clone(),
                     StaticErrorKind::ExpectedNumericType { actual: child_type },
@@ -370,7 +392,8 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             if let SymbolType::Variable(VariableSymbolType {
                 variable_type: TypeName::Primitive { primitive_type },
                 ..
-            }) = &first_type
+            })
+            | SymbolType::Value(TypeName::Primitive { primitive_type }) = &first_type
             {
                 if primitive_type == &PrimitiveTypeName::Integer
                     || primitive_type == &PrimitiveTypeName::Real
@@ -397,7 +420,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
                 ));
             }
-            if !first_type.equals_ignore_var_and_offset(&second_type) {
+            if first_type.get_variable_or_value_type_name()
+                != second_type.get_variable_or_value_type_name()
+            {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -406,7 +431,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            Some(first_type)
+            Some(first_type.variable_into_value())
         }
         OrOperator | AndOperator => {
             let first_type = type_check_recursively(&ast.children()[0], symbol_table)?
@@ -419,26 +444,27 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                         primitive_type: PrimitiveTypeName::Boolean,
                     },
                 ..
+            })
+            | SymbolType::Value(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Boolean,
             }) = &first_type
             {
                 /* ok */
             } else {
-                // expecting a non-var type here, but we actually do not care if it is var or not
+                // expecting a value here, but it could also be a variable
                 return Err(static_error(
                     ast.children()[0].interval().clone(),
                     StaticErrorKind::TypeMismatch {
-                        expected: SymbolType::Variable(VariableSymbolType {
-                            frame_offset: 0,
-                            variable_type: TypeName::Primitive {
-                                primitive_type: PrimitiveTypeName::Boolean,
-                            },
-                            var: false,
+                        expected: SymbolType::Value(TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Boolean,
                         }),
                         actual: first_type,
                     },
                 ));
             }
-            if !first_type.equals_ignore_var_and_offset(&second_type) {
+            if first_type.get_variable_or_value_type_name()
+                != second_type.get_variable_or_value_type_name()
+            {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -447,7 +473,7 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            Some(first_type)
+            Some(first_type.variable_into_value())
         }
         NotOperator => {
             let child_type = type_check_recursively(&ast.children()[0], symbol_table)?
@@ -458,26 +484,25 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                         primitive_type: PrimitiveTypeName::Boolean,
                     },
                 ..
+            })
+            | SymbolType::Value(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Boolean,
             }) = &child_type
             {
                 /* ok */
             } else {
-                // expecting a non-var type here, but we actually do not care if it is var or not
+                // expecting a value here, but it could also be a variable
                 return Err(static_error(
                     ast.children()[0].interval().clone(),
                     StaticErrorKind::TypeMismatch {
-                        expected: SymbolType::Variable(VariableSymbolType {
-                            frame_offset: 0,
-                            variable_type: TypeName::Primitive {
-                                primitive_type: PrimitiveTypeName::Boolean,
-                            },
-                            var: false,
+                        expected: SymbolType::Value(TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Boolean,
                         }),
                         actual: child_type,
                     },
                 ));
             }
-            Some(child_type)
+            Some(child_type.variable_into_value())
         }
         ModOperator => {
             let first_type = type_check_recursively(&ast.children()[0], symbol_table)?
@@ -490,26 +515,27 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                         primitive_type: PrimitiveTypeName::Integer,
                     },
                 ..
+            })
+            | SymbolType::Value(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Integer,
             }) = &first_type
             {
                 /* ok */
             } else {
-                // expecting a non-var type here, but we actually do not care if it is var or not
+                // expecting a value here, but it could also be a variable
                 return Err(static_error(
                     ast.children()[0].interval().clone(),
                     StaticErrorKind::TypeMismatch {
-                        expected: SymbolType::Variable(VariableSymbolType {
-                            frame_offset: 0,
-                            variable_type: TypeName::Primitive {
-                                primitive_type: PrimitiveTypeName::Integer,
-                            },
-                            var: false,
+                        expected: SymbolType::Value(TypeName::Primitive {
+                            primitive_type: PrimitiveTypeName::Integer,
                         }),
                         actual: first_type,
                     },
                 ));
             }
-            if !first_type.equals_ignore_var_and_offset(&second_type) {
+            if first_type.get_variable_or_value_type_name()
+                != second_type.get_variable_or_value_type_name()
+            {
                 return Err(static_error(
                     ast.interval().clone(),
                     StaticErrorKind::TypeMismatch {
@@ -518,24 +544,22 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            Some(first_type)
+            Some(first_type.variable_into_value())
         }
         DotOperator => {
             let child_type = type_check_recursively(&ast.children()[0], symbol_table)?
                 .unwrap_or(SymbolType::Empty);
-            if let SymbolType::Variable(VariableSymbolType { variable_type, .. }) = &child_type {
+            if let SymbolType::Variable(VariableSymbolType { variable_type, .. })
+            | SymbolType::Value(variable_type) = &child_type
+            {
                 match variable_type {
                     TypeName::UnsizedArray { .. } | TypeName::SizedArray { .. } => { /* ok */ }
                     other => {
-                        // expecting a non-var type here, but we actually do not care if it is var or not
+                        // expecting a value here, but it could also be a variable
                         return Err(static_error(
                             ast.children()[0].interval().clone(),
                             StaticErrorKind::ExpectedArray {
-                                actual: SymbolType::Variable(VariableSymbolType {
-                                    frame_offset: 0,
-                                    variable_type: other.clone(),
-                                    var: false,
-                                }),
+                                actual: SymbolType::Value(other.clone()),
                             },
                         ));
                     }
@@ -548,12 +572,8 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedArray { actual: child_type },
                 ));
             }
-            Some(SymbolType::Variable(VariableSymbolType {
-                frame_offset: 0,
-                var: false,
-                variable_type: TypeName::Primitive {
-                    primitive_type: PrimitiveTypeName::Integer,
-                },
+            Some(SymbolType::Value(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Integer,
             }))
         }
         IndexOperator => {
@@ -561,46 +581,41 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 .unwrap_or(SymbolType::Empty);
             let index_type = type_check_recursively(&ast.children()[1], symbol_table)?
                 .unwrap_or(SymbolType::Empty);
-            let return_type = if let SymbolType::Variable(VariableSymbolType {
-                variable_type,
-                ..
-            }) = array_type
-            {
-                match variable_type {
-                    TypeName::UnsizedArray { primitive_type }
-                    | TypeName::SizedArray { primitive_type } => {
-                        /* ok */
-                        SymbolType::Variable(VariableSymbolType {
-                            frame_offset: 0,
-                            var: false,
-                            variable_type: TypeName::Primitive { primitive_type },
-                        })
+            let return_type =
+                if let SymbolType::Variable(VariableSymbolType { variable_type, .. })
+                | SymbolType::Value(variable_type) = array_type
+                {
+                    match variable_type {
+                        TypeName::UnsizedArray { primitive_type }
+                        | TypeName::SizedArray { primitive_type } => {
+                            /* ok */
+                            SymbolType::Value(TypeName::Primitive { primitive_type })
+                        }
+                        other => {
+                            // expecting a value here, but it could also be a variable
+                            return Err(static_error(
+                                ast.children()[0].interval().clone(),
+                                StaticErrorKind::ExpectedArray {
+                                    actual: SymbolType::Value(other),
+                                },
+                            ));
+                        }
                     }
-                    other => {
-                        return Err(static_error(
-                            ast.children()[0].interval().clone(),
-                            StaticErrorKind::ExpectedArray {
-                                actual: SymbolType::Variable(VariableSymbolType {
-                                    frame_offset: 0,
-                                    variable_type: other,
-                                    var: false,
-                                }),
-                            },
-                        ));
-                    }
-                }
-            } else {
-                return Err(static_error(
-                    ast.children()[0].interval().clone(),
-                    StaticErrorKind::ExpectedArray { actual: array_type },
-                ));
-            };
+                } else {
+                    return Err(static_error(
+                        ast.children()[0].interval().clone(),
+                        StaticErrorKind::ExpectedArray { actual: array_type },
+                    ));
+                };
             if let SymbolType::Variable(VariableSymbolType {
                 variable_type:
                     TypeName::Primitive {
                         primitive_type: PrimitiveTypeName::Integer,
                     },
                 ..
+            })
+            | SymbolType::Value(TypeName::Primitive {
+                primitive_type: PrimitiveTypeName::Integer,
             }) = &index_type
             {
                 /* ok */
@@ -610,14 +625,11 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedInteger { actual: index_type },
                 ));
             }
-            Some(return_type)
+            // when indexing into an array, we can always get a pointer to the result
+            Some(return_type.value_to_variable())
         }
-        Literal { literal_type, .. } => Some(SymbolType::Variable(VariableSymbolType {
-            frame_offset: 0,
-            var: false,
-            variable_type: TypeName::Primitive {
-                primitive_type: literal_type.clone(),
-            },
+        Literal { literal_type, .. } => Some(SymbolType::Value(TypeName::Primitive {
+            primitive_type: literal_type.clone(),
         })),
         Identifier { symbol_index, .. } | PredefinedIdentifier { symbol_index, .. } => Some(
             symbol_table

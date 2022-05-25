@@ -394,6 +394,11 @@ fn generate_code_recursively(
             writeln!(output, "*((int64_t*) r0) = r1;")?;
         }
         AstNodeKind::CallStatement => {
+            let callee_symbol = symbol_table
+                .get(ast.children()[0].get_symbol_index().unwrap())
+                .unwrap();
+            let callee_type = callee_symbol.symbol_type().unwrap_function();
+
             // push return address (creating a new one)
             context.last_return_id += 1;
             push_int(output, &format!("{}", context.last_return_id))?;
@@ -401,8 +406,13 @@ fn generate_code_recursively(
             push_int(output, "(int64_t) frame_pointer")?;
 
             // compute parameters (they will be pushed onto the stack one by one, implicitly setting up the stack for the callee)
-            for child in ast.children().iter().skip(1) {
-                generate_code_recursively(child, symbol_table, output, context, false)?;
+            for (child, child_type) in ast
+                .children()
+                .iter()
+                .skip(1)
+                .zip(callee_type.parameter_types.iter())
+            {
+                generate_code_recursively(child, symbol_table, output, context, child_type.var)?;
             }
             // set up callee frame pointer
             writeln!(
@@ -411,10 +421,6 @@ fn generate_code_recursively(
                 (ast.children().len() - 1) * 8
             )?;
             // set up callee stack pointer
-            let callee_symbol = symbol_table
-                .get(ast.children()[0].get_symbol_index().unwrap())
-                .unwrap();
-            let callee_type = callee_symbol.symbol_type().unwrap_function();
             writeln!(
                 output,
                 "stack_pointer = frame_pointer + {};",
@@ -793,6 +799,9 @@ fn generate_code_recursively(
                     }
                     push_int(output, "r0")?;
                     return Ok(Some(variable_symbol_type.variable_type.clone()));
+                }
+                SymbolType::Value(_) => {
+                    unreachable!("identifiers cannot be values");
                 }
                 SymbolType::BuiltinFunction => {
                     unreachable!("builtin functions are generated on the CallStatement level");

@@ -37,6 +37,8 @@ pub enum SymbolType {
     Function(FunctionType),
     /// A variable.
     Variable(VariableSymbolType),
+    /// A value.
+    Value(TypeName),
     /// A built-in function, which is a special case of a function as it can have a variable amount of parameters.
     BuiltinFunction,
     /// A built-in constant like `true` or `false`, which can be overridden by variable declarations.
@@ -52,7 +54,7 @@ pub enum SymbolType {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FunctionType {
     /// The list of its parameter types.
-    pub parameter_types: Vec<TypeName>,
+    pub parameter_types: Vec<VariableSymbolType>,
     /// The optional return type.
     /// This is `None` for a procedure, and `Some(_)` for a function.
     pub return_type: Option<TypeName>,
@@ -89,8 +91,12 @@ impl SymbolTable {
         result.add_symbol(
             "assert".to_string(),
             SymbolType::Function(FunctionType {
-                parameter_types: vec![TypeName::Primitive {
-                    primitive_type: PrimitiveTypeName::Boolean,
+                parameter_types: vec![VariableSymbolType {
+                    var: false,
+                    variable_type: TypeName::Primitive {
+                        primitive_type: PrimitiveTypeName::Boolean,
+                    },
+                    frame_offset: 0,
                 }],
                 return_type: None,
                 frame_size: 0,
@@ -166,28 +172,6 @@ impl Symbol {
 }
 
 impl SymbolType {
-    /// Compare two `SymbolType`s, treating differing `var` and `frame_offset` properties of variables as equal.
-    /// This is useful in type checking, since there it does not matter if anything is a reference or value or what frame offset it has.
-    pub fn equals_ignore_var_and_offset(&self, other: &Self) -> bool {
-        self.clone_without_var_and_offset() == other.clone_without_var_and_offset()
-    }
-
-    /// Clone the type, setting `var` to false and `frame_offset` to 0.
-    /// This is used in comparisons where the `var` property does not matter.
-    // this hopefully gets optimised properly, since the cloning is not actually necessary, but makes it simpler to write
-    pub fn clone_without_var_and_offset(&self) -> Self {
-        match self.clone() {
-            SymbolType::Variable(VariableSymbolType { variable_type, .. }) => {
-                SymbolType::Variable(VariableSymbolType {
-                    var: false,
-                    variable_type,
-                    frame_offset: 0,
-                })
-            }
-            other => other,
-        }
-    }
-
     /// Assume that this [SymbolType] is a variable, and return the corresponding [VariableSymbolType].
     /// Panics if the [SymbolType] is anything else.
     pub fn unwrap_variable(&self) -> &VariableSymbolType {
@@ -198,6 +182,16 @@ impl SymbolType {
         }
     }
 
+    /// Assume that this [SymbolType] is a value, and return the corresponding [TypeName].
+    /// Panics if the [SymbolType] is anything else.
+    pub fn unwrap_value(&self) -> &TypeName {
+        if let SymbolType::Value(result) = self {
+            result
+        } else {
+            panic!("Not a value: {self:?}");
+        }
+    }
+
     /// Assume that this [SymbolType] is a function, and return the corresponding [FunctionType].
     /// Panics if the [SymbolType] is anything else.
     pub fn unwrap_function(&self) -> &FunctionType {
@@ -205,6 +199,57 @@ impl SymbolType {
             result
         } else {
             panic!("Not a function: {self:?}");
+        }
+    }
+
+    /// Returns true if this [SymbolType] is a variable.
+    pub fn is_variable(&self) -> bool {
+        matches!(self, SymbolType::Variable(_))
+    }
+
+    /// Returns true if this [SymbolType] is a value.
+    pub fn is_value(&self) -> bool {
+        matches!(self, SymbolType::Value(_))
+    }
+
+    /// Returns the type name of the variable or value represented by this [SymbolType].
+    /// Panics if the [SymbolType] is not a variable or value.
+    pub fn get_variable_or_value_type_name(&self) -> &TypeName {
+        if let SymbolType::Variable(VariableSymbolType { variable_type, .. }) = self {
+            variable_type
+        } else if let SymbolType::Value(type_name) = self {
+            type_name
+        } else {
+            panic!("Not a variable or value: {self:?}");
+        }
+    }
+
+    /// Clones this [SymbolType] into a value if it is a variable, or just as a value if it is a value already.
+    /// Panics if the [SymbolType] is not a variable or value.
+    pub fn variable_into_value(&self) -> Self {
+        if let SymbolType::Variable(VariableSymbolType { variable_type, .. }) = self {
+            Self::Value(variable_type.clone())
+        } else if let SymbolType::Value(_) = self {
+            self.clone()
+        } else {
+            panic!("Not a variable: {self:?}");
+        }
+    }
+
+    /// Clones this [SymbolType] into a variable if it is a value, or just as a variable if it is a variable already.
+    /// The resulting variable will have `var == false` and `frame_offset == 0`.
+    /// Panics if the [SymbolType] is not a variable or value.
+    pub fn value_to_variable(&self) -> Self {
+        if let SymbolType::Variable(_) = self {
+            self.clone()
+        } else if let SymbolType::Value(type_name) = self {
+            SymbolType::Variable(VariableSymbolType {
+                var: false,
+                variable_type: type_name.clone(),
+                frame_offset: 0,
+            })
+        } else {
+            panic!("Not a variable: {self:?}");
         }
     }
 }
@@ -354,7 +399,7 @@ fn build_symbol_table_recursively(
             map_stack.push();
             // only set frame size if it contains any symbols
             let symbol_count = symbol_table.symbols.len();
-            // skip to not build the symbol table for the identifier twice
+            // skip first to not build the symbol table for the identifier twice
             for child in ast.children_mut().iter_mut().skip(1) {
                 build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
             }

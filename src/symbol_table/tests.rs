@@ -55,8 +55,12 @@ end.
                     index: 3,
                     name: "assert".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
-                        parameter_types: vec![TypeName::Primitive {
-                            primitive_type: PrimitiveTypeName::Boolean
+                        parameter_types: vec![VariableSymbolType {
+                            var: false,
+                            frame_offset: 0,
+                            variable_type: TypeName::Primitive {
+                                primitive_type: PrimitiveTypeName::Boolean
+                            }
                         }],
                         return_type: None,
                         frame_size: 0,
@@ -191,8 +195,12 @@ end.";
                     index: 3,
                     name: "assert".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
-                        parameter_types: vec![TypeName::Primitive {
-                            primitive_type: PrimitiveTypeName::Boolean
+                        parameter_types: vec![VariableSymbolType {
+                            var: false,
+                            frame_offset: 0,
+                            variable_type: TypeName::Primitive {
+                                primitive_type: PrimitiveTypeName::Boolean
+                            }
                         }],
                         return_type: None,
                         frame_size: 0,
@@ -218,11 +226,19 @@ end.";
                     name: "gcd".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
                         parameter_types: vec![
-                            TypeName::Primitive {
-                                primitive_type: PrimitiveTypeName::Integer,
+                            VariableSymbolType {
+                                var: false,
+                                frame_offset: 0,
+                                variable_type: TypeName::Primitive {
+                                    primitive_type: PrimitiveTypeName::Integer,
+                                }
                             },
-                            TypeName::Primitive {
-                                primitive_type: PrimitiveTypeName::Integer,
+                            VariableSymbolType {
+                                var: false,
+                                frame_offset: 8,
+                                variable_type: TypeName::Primitive {
+                                    primitive_type: PrimitiveTypeName::Integer,
+                                }
                             },
                         ],
                         return_type: Some(TypeName::Primitive {
@@ -370,8 +386,12 @@ end.";
                     index: 3,
                     name: "assert".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
-                        parameter_types: vec![TypeName::Primitive {
-                            primitive_type: PrimitiveTypeName::Boolean
+                        parameter_types: vec![VariableSymbolType {
+                            var: false,
+                            frame_offset: 0,
+                            variable_type: TypeName::Primitive {
+                                primitive_type: PrimitiveTypeName::Boolean
+                            }
                         }],
                         return_type: None,
                         frame_size: 0,
@@ -396,8 +416,12 @@ end.";
                     index: 7,
                     name: "sort_pair_descending".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
-                        parameter_types: vec![TypeName::SizedArray {
-                            primitive_type: PrimitiveTypeName::Integer,
+                        parameter_types: vec![VariableSymbolType {
+                            var: false,
+                            frame_offset: 0,
+                            variable_type: TypeName::SizedArray {
+                                primitive_type: PrimitiveTypeName::Integer,
+                            }
                         },],
                         return_type: None,
                         frame_size: 2 * mem::size_of::<usize>(),
@@ -430,11 +454,19 @@ end.";
                     name: "gcd".to_string(),
                     symbol_type: SymbolType::Function(FunctionType {
                         parameter_types: vec![
-                            TypeName::SizedArray {
-                                primitive_type: PrimitiveTypeName::Integer,
+                            VariableSymbolType {
+                                var: false,
+                                frame_offset: 0,
+                                variable_type: TypeName::SizedArray {
+                                    primitive_type: PrimitiveTypeName::Integer,
+                                }
                             },
-                            TypeName::Primitive {
-                                primitive_type: PrimitiveTypeName::Integer,
+                            VariableSymbolType {
+                                var: true,
+                                frame_offset: 8,
+                                variable_type: TypeName::Primitive {
+                                    primitive_type: PrimitiveTypeName::Integer,
+                                }
                             },
                         ],
                         return_type: None,

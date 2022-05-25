@@ -1,6 +1,7 @@
 use crate::error::Result;
 use crate::error::{parser_error, ParserErrorKind};
 use crate::scanner::{ScanInterval, Scanner, Token};
+use crate::symbol_table::VariableSymbolType;
 use crate::Error;
 use log::trace;
 use std::collections::VecDeque;
@@ -200,26 +201,48 @@ impl AstNode {
 
     /// Assume that this node is a procedure and get a vector of the types of its parameters.
     /// Panics if not a procedure, or the AST is malformed.
-    pub fn get_parameter_types(&self) -> Vec<TypeName> {
+    pub fn get_parameter_types(&self) -> Vec<VariableSymbolType> {
         trace!("get_parameter_types {self:?}");
         debug_assert_eq!(self.kind, AstNodeKind::Procedure);
         let mut result = Vec::new();
         // first child is the identifier of the procedure, last is the body (a block)
-        for parameter in self.children.iter().skip(1).rev().skip(1).rev() {
-            result.push(parameter.get_variable_type());
+        for (frame_index, parameter) in self.children.iter().skip(1).rev().skip(1).rev().enumerate()
+        {
+            let var = parameter.kind() == &AstNodeKind::VarParameter;
+            if !var {
+                debug_assert!(parameter.kind() == &AstNodeKind::ValueParameter);
+            }
+            result.push(VariableSymbolType {
+                var,
+                variable_type: parameter.get_variable_type(),
+                frame_offset: 8 * frame_index,
+            });
         }
         result
     }
 
     /// Assume that this node is a function and get a vector of the types of its parameters as well as its return type.
     /// Panics if not a function, or the AST is malformed.
-    pub fn get_parameter_types_and_return_type(&self) -> (Vec<TypeName>, TypeName) {
+    pub fn get_parameter_types_and_return_type(&self) -> (Vec<VariableSymbolType>, TypeName) {
         trace!("get_parameter_types_and_return_type {self:?}");
         debug_assert_eq!(self.kind, AstNodeKind::Function);
         let mut result = Vec::new();
         // first child is the identifier of the procedure, second to last is the return type and last is the body (a block)
-        for parameter in self.children.iter().skip(1).rev().skip(2).rev() {
-            result.push(parameter.get_variable_type());
+        for (frame_index, parameter) in self.children.iter().skip(1).rev().skip(2).rev().enumerate()
+        {
+            let var = parameter.kind() == &AstNodeKind::VarParameter;
+            if !var {
+                debug_assert!(
+                    parameter.kind() == &AstNodeKind::ValueParameter,
+                    "expected ValueParameter, but got: {parameter:#?}\n{:#?}",
+                    &self.children[..self.children.len() - 1]
+                );
+            }
+            result.push(VariableSymbolType {
+                var,
+                variable_type: parameter.get_variable_type(),
+                frame_offset: 8 * frame_index,
+            });
         }
         let return_type = if let AstNodeKind::Type { type_name } = &self
             .children()
