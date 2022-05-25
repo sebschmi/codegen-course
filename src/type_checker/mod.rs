@@ -1,6 +1,6 @@
 use crate::error::{static_error, Result, StaticErrorKind};
 use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
-use crate::symbol_table::{FunctionType, SymbolTable, SymbolType, VariableSymbolType};
+use crate::symbol_table::{FunctionType, Symbol, SymbolTable, SymbolType, VariableSymbolType};
 use log::trace;
 
 /// Check for all possible type errors, i.e. that there are no type-conflicts between AST nodes.
@@ -58,8 +58,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 if return_type == SymbolType::Empty || expected_return_type == SymbolType::Empty {
                     return_type != expected_return_type
                 } else {
-                    return_type.get_variable_or_value_type_name()
-                        != expected_return_type.get_variable_or_value_type_name()
+                    return_type
+                        .get_variable_or_value_type_name()
+                        .to_unsized_array()
+                        != expected_return_type
+                            .get_variable_or_value_type_name()
+                            .to_unsized_array()
                 };
             if error {
                 return Err(static_error(
@@ -82,8 +86,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 if let Some(alternate_return_type) = type_check_recursively(child, symbol_table)? {
                     trace!("statement_return_type: {alternate_return_type:?}");
                     if let Some(return_type) = return_type.as_ref() {
-                        if return_type.get_variable_or_value_type_name()
-                            != alternate_return_type.get_variable_or_value_type_name()
+                        if return_type
+                            .get_variable_or_value_type_name()
+                            .to_unsized_array()
+                            != alternate_return_type
+                                .get_variable_or_value_type_name()
+                                .to_unsized_array()
                         {
                             return Err(static_error(
                                 ast.interval().clone(),
@@ -112,8 +120,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
             let assignee_type = type_check_recursively(&ast.children()[0], symbol_table)?;
             let value_type = type_check_recursively(&ast.children()[1], symbol_table)?;
             if let (Some(assignee_type), Some(value_type)) = (assignee_type, value_type) {
-                if assignee_type.get_variable_or_value_type_name()
-                    != value_type.get_variable_or_value_type_name()
+                if assignee_type
+                    .get_variable_or_value_type_name()
+                    .to_unsized_array()
+                    != value_type
+                        .get_variable_or_value_type_name()
+                        .to_unsized_array()
                 {
                     return Err(static_error(
                         ast.interval().clone(),
@@ -141,7 +153,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
         }
         CallStatement | AssertStatement => {
             trace!("ast: {ast:?}");
-            let symbol_index = ast.children()[0].get_symbol_index().unwrap();
+            let symbol_index = if ast.kind() == &AssertStatement {
+                debug_assert_eq!(symbol_table.get(3).map(Symbol::name), Some("assert"));
+                3
+            } else {
+                ast.children()[0].get_symbol_index().unwrap()
+            };
             let symbol = symbol_table.get(symbol_index).unwrap();
             trace!("function_name_symbol: {symbol:?}");
             if let SymbolType::Function(FunctionType {
@@ -150,7 +167,9 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                 ..
             }) = symbol.symbol_type()
             {
-                let argument_count = ast.children().len() - 1;
+                let argument_children =
+                    &ast.children()[if ast.kind() == &AssertStatement { 0 } else { 1 }..];
+                let argument_count = argument_children.len();
                 if argument_count != parameter_types.len() {
                     return Err(static_error(
                         ast.interval().clone(),
@@ -161,14 +180,16 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     ));
                 }
 
-                for (child, expected_type) in
-                    ast.children().iter().skip(1).zip(parameter_types.iter())
-                {
+                for (child, expected_type) in argument_children.iter().zip(parameter_types.iter()) {
                     let expected_type = SymbolType::Variable(expected_type.clone());
                     let child_type = type_check_recursively(child, symbol_table)?;
                     if let Some(child_type) = child_type {
-                        if expected_type.get_variable_or_value_type_name()
-                            != child_type.get_variable_or_value_type_name()
+                        if expected_type
+                            .get_variable_or_value_type_name()
+                            .to_unsized_array()
+                            != child_type
+                                .get_variable_or_value_type_name()
+                                .to_unsized_array()
                         {
                             return Err(static_error(
                                 ast.interval().clone(),
@@ -297,8 +318,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     let else_type = type_check_recursively(&ast.children()[2], symbol_table)?;
                     if let Some(if_while_type) = &if_while_type {
                         if let Some(else_type) = else_type {
-                            if if_while_type.get_variable_or_value_type_name()
-                                != else_type.get_variable_or_value_type_name()
+                            if if_while_type
+                                .get_variable_or_value_type_name()
+                                .to_unsized_array()
+                                != else_type
+                                    .get_variable_or_value_type_name()
+                                    .to_unsized_array()
                             {
                                 return Err(static_error(
                                     ast.interval().clone(),
@@ -345,8 +370,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
                 ));
             }
-            if first_type.get_variable_or_value_type_name()
-                != second_type.get_variable_or_value_type_name()
+            if first_type
+                .get_variable_or_value_type_name()
+                .to_unsized_array()
+                != second_type
+                    .get_variable_or_value_type_name()
+                    .to_unsized_array()
             {
                 return Err(static_error(
                     ast.interval().clone(),
@@ -423,8 +452,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     StaticErrorKind::ExpectedPrimitiveType { actual: first_type },
                 ));
             }
-            if first_type.get_variable_or_value_type_name()
-                != second_type.get_variable_or_value_type_name()
+            if first_type
+                .get_variable_or_value_type_name()
+                .to_unsized_array()
+                != second_type
+                    .get_variable_or_value_type_name()
+                    .to_unsized_array()
             {
                 return Err(static_error(
                     ast.interval().clone(),
@@ -465,8 +498,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            if first_type.get_variable_or_value_type_name()
-                != second_type.get_variable_or_value_type_name()
+            if first_type
+                .get_variable_or_value_type_name()
+                .to_unsized_array()
+                != second_type
+                    .get_variable_or_value_type_name()
+                    .to_unsized_array()
             {
                 return Err(static_error(
                     ast.interval().clone(),
@@ -536,8 +573,12 @@ fn type_check_recursively(ast: &AstNode, symbol_table: &SymbolTable) -> Result<O
                     },
                 ));
             }
-            if first_type.get_variable_or_value_type_name()
-                != second_type.get_variable_or_value_type_name()
+            if first_type
+                .get_variable_or_value_type_name()
+                .to_unsized_array()
+                != second_type
+                    .get_variable_or_value_type_name()
+                    .to_unsized_array()
             {
                 return Err(static_error(
                     ast.interval().clone(),

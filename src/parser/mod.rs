@@ -290,7 +290,7 @@ impl TypeName {
                 match primitive_type {
                     PrimitiveTypeName::Boolean => "int64_t*",
                     PrimitiveTypeName::Integer => "int64_t*",
-                    PrimitiveTypeName::Real => "float*",
+                    PrimitiveTypeName::Real => "double*",
                     PrimitiveTypeName::String => "char**",
                 }
             }
@@ -322,6 +322,18 @@ impl TypeName {
             | TypeName::SizedArray { primitive_type } => primitive_type,
         }
     }
+
+    /// Clone this type, while changing a sized array to an unsized array.
+    /// Other types are left as they are.
+    pub fn to_unsized_array(&self) -> Self {
+        match self {
+            TypeName::Primitive { .. } => self.clone(),
+            TypeName::UnsizedArray { .. } => self.clone(),
+            TypeName::SizedArray { primitive_type } => TypeName::UnsizedArray {
+                primitive_type: primitive_type.clone(),
+            },
+        }
+    }
 }
 
 impl PrimitiveTypeName {
@@ -330,7 +342,7 @@ impl PrimitiveTypeName {
         match self {
             PrimitiveTypeName::Boolean => "int64_t",
             PrimitiveTypeName::Integer => "int64_t",
-            PrimitiveTypeName::Real => "float",
+            PrimitiveTypeName::Real => "double",
             PrimitiveTypeName::String => "char*",
         }
     }
@@ -1001,6 +1013,7 @@ fn parse_unsigned_simple_expression(
                     Token::OrOperator => AstNodeKind::OrOperator,
                     token => unreachable!("{token:?}"),
                 };
+                scanner.next().unwrap().0.unwrap();
 
                 let term = parse_term(scanner, parser_context)?;
                 let interval = interval.extend_clone(&term.interval);
@@ -1157,7 +1170,7 @@ fn parse_factor(
         }
         let interval = factor.interval.extend_clone(&identifier.interval);
         AstNode {
-            children: vec![factor, identifier],
+            children: vec![factor],
             kind: AstNodeKind::DotOperator,
             interval,
         }

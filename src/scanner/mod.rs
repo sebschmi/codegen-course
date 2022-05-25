@@ -1,5 +1,6 @@
 use crate::error::{scanner_error, Result, ScannerErrorKind};
 use std::cmp::Ordering;
+use std::fmt::{Display, Formatter};
 
 /// The set of tokens output by the scanner.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -512,6 +513,21 @@ impl ScanInterval {
             Ordering::Greater => {}
         }
         result
+    }
+}
+
+impl Display for ScanInterval {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if self.start_line < self.end_line {
+            write!(f, "{}-{}:", self.start_line, self.end_line)?;
+        } else {
+            write!(f, "{}:", self.start_line)?;
+        }
+        if self.start_column < self.end_column {
+            write!(f, "{}-{}", self.start_column, self.end_column)
+        } else {
+            write!(f, "{}", self.start_column)
+        }
     }
 }
 

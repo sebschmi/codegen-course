@@ -314,6 +314,7 @@ fn build_symbol_table_recursively(
     map_stack: &mut MapStack<String, usize>,
     frame_offset: &mut usize,
 ) -> Result<()> {
+    trace!("symbol_table {ast:?}");
     use AstNodeKind::*;
 
     match ast.kind() {
@@ -486,12 +487,40 @@ fn build_symbol_table_recursively(
                 map_stack.insert(identifier, index);
                 *child.get_symbol_index_mut().unwrap() = index;
             }
+            // build symbol table for potential length of array
+            build_symbol_table_recursively(
+                ast.children_mut().last_mut().unwrap(),
+                symbol_table,
+                map_stack,
+                frame_offset,
+            )?;
         }
-        AssignmentStatement | CallStatement | ReturnStatement | ReadStatement | WriteStatement
-        | AssertStatement | IfStatement | WhileStatement | EqOperator | NeqOperator
-        | LtOperator | LeqOperator | GeqOperator | GtOperator | NegOperator | AddOperator
-        | SubOperator | OrOperator | NotOperator | MulOperator | DivOperator | ModOperator
-        | AndOperator | DotOperator | IndexOperator => {
+        AssignmentStatement
+        | CallStatement
+        | ReturnStatement
+        | ReadStatement
+        | WriteStatement
+        | AssertStatement
+        | IfStatement
+        | WhileStatement
+        | EqOperator
+        | NeqOperator
+        | LtOperator
+        | LeqOperator
+        | GeqOperator
+        | GtOperator
+        | NegOperator
+        | AddOperator
+        | SubOperator
+        | OrOperator
+        | NotOperator
+        | MulOperator
+        | DivOperator
+        | ModOperator
+        | AndOperator
+        | DotOperator
+        | IndexOperator
+        | Type { .. } => {
             for child in ast.children_mut().iter_mut() {
                 build_symbol_table_recursively(child, symbol_table, map_stack, frame_offset)?;
             }
@@ -520,7 +549,6 @@ fn build_symbol_table_recursively(
                 ));
             }
         }
-        Type { .. } => { /* types cannot use symbols */ }
     }
 
     Ok(())

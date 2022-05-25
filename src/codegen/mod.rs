@@ -1,6 +1,7 @@
 use crate::error::Result;
 use crate::parser::{AstNode, AstNodeKind, PrimitiveTypeName, TypeName};
 use crate::symbol_table::{SymbolTable, SymbolType};
+use log::trace;
 use std::fmt::Write;
 use std::mem;
 
@@ -43,9 +44,9 @@ void write_string(char* output) {
     fprintf(stdout, "%s\n", output);
 }
 
-void assert(int64_t condition) {
+void assert(int64_t condition, int64_t line) {
     if (condition) return;
-    write_string("assertion error");
+    fprintf(stdout, "assertion error in line %ld\n", line);
     exit(1);
 }
 
@@ -54,7 +55,7 @@ int64_t string_eq(char* a, char* b) {
         if (a[i] != b[i]) return 0;
         if (a[i] == 0) return 1;
     }
-    assert(0);
+    assert(0, -1);
 }
 
 int64_t string_neq(char* a, char* b) {
@@ -62,7 +63,7 @@ int64_t string_neq(char* a, char* b) {
         if (a[i] != b[i]) return 1;
         if (a[i] == 0) return 0;
     }
-    assert(0);
+    assert(0, -2);
 }
 
 // lexicographic ordering of strings, prefixes are shorter than the original
@@ -72,7 +73,7 @@ int64_t string_leq(char* a, char* b) {
         if (a[i] < b[i]) return 1;
         if (a[i] == 0) return 1;
     }
-    assert(0);
+    assert(0, -3);
 }
 
 int64_t string_geq(char* a, char* b) {
@@ -81,7 +82,7 @@ int64_t string_geq(char* a, char* b) {
         if (a[i] > b[i]) return 1;
         if (a[i] == 0) return 1;
     }
-    assert(0);
+    assert(0, -4);
 }
 
 int64_t string_lt(char* a, char* b) {
@@ -90,7 +91,7 @@ int64_t string_lt(char* a, char* b) {
         if (a[i] < b[i]) return 1;
         if (a[i] == 0) return 0;
     }
-    assert(0);
+    assert(0, -5);
 }
 
 int64_t string_gt(char* a, char* b) {
@@ -99,7 +100,7 @@ int64_t string_gt(char* a, char* b) {
         if (a[i] > b[i]) return 1;
         if (a[i] == 0) return 0;
     }
-    assert(0);
+    assert(0, -6);
 }
 
 char* string_concat(char* a, char* b) {
@@ -108,15 +109,16 @@ char* string_concat(char* a, char* b) {
     uint64_t len_b;
     for (len_b = 0; b[len_b] != 0; len_b++);
     char* result = malloc(len_a + len_b + 1);
-    assert(result != 0);
+    assert(result != 0, -7);
     for (uint64_t i = 0; i < len_a; i++) result[i] = a[i];
     for (uint64_t i = 0; i < len_b; i++) result[len_a + i] = b[i];
+    result[len_a + len_b] = 0;
     return result;
 }
 
 void main() {
 void* stack = aligned_alloc(16, 1024 * 1024); // 1 Mib of stack space, align to 16 bytes to make sure that it works for all sizes of usize
-assert(stack != 0);
+assert(stack != 0, -8);
 // these pointers are assumed to be registers, so we can manipulate them directly without loading or storing
 void* stack_pointer = stack; // points to the address after the top of the stack
 void* frame_pointer = stack; // points to the base of the current stack frame
@@ -243,6 +245,8 @@ fn generate_code_recursively(
     context: &mut CodeGenerationContext,
     indirection: bool,
 ) -> Result<Option<TypeName>> {
+    trace!("codegen {ast:?}");
+
     // assert that indirection is only true in the supported cases
     if indirection {
         match ast.kind() {
@@ -500,7 +504,7 @@ fn generate_code_recursively(
                 .unwrap();
             pop_int(output, "r0")?;
             // test assertion
-            writeln!(output, "assert(r0)")?;
+            writeln!(output, "assert(r0, {});", ast.interval().start_line)?;
         }
         AstNodeKind::IfStatement => {
             let else_label = format!("l_else_{}", context.current_label_id);
@@ -602,7 +606,10 @@ fn generate_code_recursively(
                     AstNodeKind::AddOperator => "concat",
                     other => unreachable!("{other:?}"),
                 };
-                writeln!(output, "r0 = string_{runtime_function}(r0, r1);")?;
+                writeln!(
+                    output,
+                    "r0 = (int64_t) string_{runtime_function}((char*) r0, (char*) r1);"
+                )?;
             } else {
                 // get c operator
                 let operator = match binary_operator {
@@ -701,12 +708,22 @@ fn generate_code_recursively(
                 .get(ast.children()[0].get_symbol_index().unwrap())
                 .unwrap();
             let array_symbol_type = array_symbol.symbol_type().unwrap_variable();
+            writeln!(
+                output,
+                "// array size {} with{} indirection with{} var ({})",
+                array_symbol.name(),
+                if indirection { "" } else { "out" },
+                if array_symbol_type.var { "" } else { "out" },
+                ast.interval()
+            )?;
             // get array symbol position on stack
             writeln!(
                 output,
                 "r0 = ((int64_t) (frame_pointer + {}));",
                 array_symbol_type.frame_offset
             )?;
+            // retrieve the pointer from the stack
+            writeln!(output, "r0 = *((int64_t*) r0);")?;
             // vars have one more step of indirection
             if array_symbol_type.var {
                 writeln!(output, "r0 = *((int64_t*) r0);")?;
@@ -745,8 +762,8 @@ fn generate_code_recursively(
             // get length
             writeln!(output, "r2 = *((int64_t*) r0);")?;
             // assert that length is valid
-            writeln!(output, "assert(r1 >= 0);")?;
-            writeln!(output, "assert(r1 < r2);")?;
+            writeln!(output, "assert(r1 >= 0, {});", ast.interval().start_line)?;
+            writeln!(output, "assert(r1 < r2, {});", ast.interval().start_line)?;
 
             // skip zero element of array
             writeln!(output, "r1 = r1 + 1;")?;
@@ -766,7 +783,7 @@ fn generate_code_recursively(
             value,
         } => {
             if literal_type == &PrimitiveTypeName::String {
-                writeln!(output, "r0 = (int64_t) \"{value}\"")?;
+                writeln!(output, "r0 = (int64_t) \"{value}\";")?;
                 push_int(output, "r0")?;
             } else if literal_type == &PrimitiveTypeName::Boolean {
                 unreachable!("true and false are parsed into predefined identifiers");
@@ -787,7 +804,9 @@ fn generate_code_recursively(
             lower_case,
             ..
         } => {
-            let symbol = symbol_table.get(*symbol_index).unwrap();
+            let symbol = symbol_table.get(*symbol_index).unwrap_or_else(|| {
+                panic!("symbol not found: {symbol_index} ({lower_case})\n{symbol_table:#?}")
+            });
             let identifier = symbol.name();
             match symbol.symbol_type() {
                 SymbolType::Function(_) => {

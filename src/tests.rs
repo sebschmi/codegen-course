@@ -1,4 +1,8 @@
 use crate::{compile, initialise_logging};
+use log::info;
+use std::ffi::OsString;
+use std::fs;
+use std::fs::File;
 use std::io::Write;
 
 pub struct NullWriter;
@@ -134,4 +138,27 @@ end.";
     compile(program.as_bytes(), &mut output).unwrap();
     let output = String::from_utf8(output).unwrap();
     println!("{output}");
+}
+
+#[test]
+fn test_example_programs() {
+    initialise_logging();
+    let files = fs::read_dir("example_programs").unwrap();
+    for file in files {
+        let file = file.unwrap();
+        if !file.metadata().unwrap().is_file()
+            || file
+                .path()
+                .extension()
+                .map(ToOwned::to_owned)
+                .unwrap_or_else(|| OsString::from(""))
+                != OsString::from("mpl").as_os_str()
+        {
+            continue;
+        }
+
+        info!("Compiling {file:?}");
+        let mut output = Vec::<u8>::new();
+        compile(File::open(file.path()).unwrap(), &mut output).unwrap();
+    }
 }
